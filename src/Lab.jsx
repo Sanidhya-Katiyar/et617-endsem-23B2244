@@ -149,6 +149,7 @@ export function Lab({ state, update, log, go, setState }) {
         {' '}<button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button></p>
 
       <div className="card">
+        <p style={{ marginTop: 0 }}>Let's test your idea. <b>First</b>, set up the rod. <b>Second</b>, press Run. <b>Third</b>, compare rows in the table. Change <span className="key">one variable at a time</span>!</p>
         <div className="row">
           <label>Material <select value={setup.material} onChange={(e) => setVar('material', e.target.value)}>
             {Object.entries(MATERIALS).map(([id, m]) => <option key={id} value={id}>{m.name} (k = {m.k})</option>)}
@@ -225,7 +226,7 @@ export function Lab({ state, update, log, go, setState }) {
       {problem && !running && (
         <div className="card" style={{ borderColor: '#facc15' }}>
           <b className="warn">⚠ {problem.title}</b>
-          <p style={{ fontSize: 14 }}>Unsuccessful experiments are useful too. Work out what this one is telling you.</p>
+          <p style={{ fontSize: 14 }}>No result? That's still data! What is this run telling us?</p>
           {problem.hints.slice(0, hintLevel).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
           <div className="row">
             {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1}/3)</button>}

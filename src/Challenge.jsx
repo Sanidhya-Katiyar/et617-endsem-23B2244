@@ -240,7 +240,7 @@ export function Challenge({ state, update, log, go }) {
   return (
     <div>
       <h2>🏆 Level 4: Olympiad Challenge</h2>
-      <p>Use your lab results. Score: {score}/{QUESTIONS.length}. Want to check something? <button className="secondary" onClick={() => go('lab')}>Back to lab</button></p>
+      <p>Let's put your lab results to work. Think like an Olympiad examiner. Score: {score}/{QUESTIONS.length}. Want to check something? <button className="secondary" onClick={() => go('lab')}>Back to lab</button></p>
       <Discovery state={state} update={update} log={log} />
       {QUESTIONS.map((q) => (
         <div key={q.id}>

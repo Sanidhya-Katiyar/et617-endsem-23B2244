@@ -37,7 +37,7 @@ export function Hook({ state, update, log, go }) {
     <div>
       <h2>🧩 Level 1: The Spoon Puzzle</h2>
       <div className="card">
-        <p>A metal spoon and a wooden spoon have both been on the table all night. Which is <b>colder</b>?</p>
+        <p>Let's start with a puzzle. A metal spoon and a wooden spoon have both been on the table <b>all night</b>. Which one is <span className="key">colder</span>?</p>
         <label>How confident are you? {confidence}/5
           <input type="range" min="1" max="5" value={confidence} disabled={answer !== null}
             onChange={(e) => setHook({ confidence: Number(e.target.value) })} />
@@ -80,7 +80,7 @@ export function Welcome({ state, go, setState }) {
   return (
     <div>
       <h1>Challenge Mode: Heat Conduction Lab</h1>
-      <p>Not a drill. You get five levels, one 10-minute session, and puzzles that a textbook list won't solve.</p>
+      <p>This is not a drill. Five levels, 10 minutes, and puzzles a textbook list can't solve. Ready?</p>
       <div className="card">
         <div>🧩 Level 1: The Spoon Puzzle</div>
         <div>🧪 Level 2: Your Hypothesis</div>
@@ -169,7 +169,7 @@ export function Hypothesis({ state, update, log, go }) {
       <h2>🧪 Level 2: {h.saved ? 'Revise your hypothesis' : 'Your hypothesis'}</h2>
       <div className="card">
         <p>A rod is heated at one end. Wax beads stuck along it melt and drop when the rod reaches 60 °C there.
-          <b> Which variables change how long heat takes to reach the far end?</b> Tick all you think matter.</p>
+          <b> What controls how fast heat reaches the far end?</b> Tick every variable you think matters. Be bold, because we'll test it.</p>
         {VARIABLES.map(([id, text]) => (
           <label key={id}><input type="checkbox" checked={h.vars.includes(id)} onChange={() => toggle(id)} /> {text}</label>
         ))}
