@@ -26,6 +26,9 @@ RULES:
 
 // Builds the user message for one request.
 export function buildUserPrompt(kind, text, context = {}) {
+  if (kind === 'reflect') {
+    return `TASK: Explain to a younger student (Class 6) what controls how fast heat travels along a rod, and why a metal spoon feels colder than a wooden one. Judge whether all ideas are present: same temperature, conduction rate, and that material, length and thickness matter.\n\nLEARNER'S ANSWER: """${String(text).slice(0, 600)}"""`
+  }
   const task = kind === 'spoon'
     ? 'TASK: Explain why the metal spoon FEELS colder than the wooden spoon after both spent the night on the same table.'
     : `TASK: Write a conclusion from the rod experiment: which variables change the time for heat to reach the far end?

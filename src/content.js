@@ -192,6 +192,18 @@ export function checkConclusion(text) {
   return { fb: "Good start. Is there a variable you haven't tested on its own yet? What would a fair test of it look like?" }
 }
 
+// ---------- DISCUSSION: reflection prompt + offline rubric ----------
+export const REFLECT_PROMPT = 'Explain it to a junior: in 2 or 3 sentences, tell a Class 6 student what controls how fast heat travels along a rod, and why the metal spoon feels colder.'
+export function checkReflection(text) {
+  const t = text.toLowerCase()
+  const ideas = [/same|equal|room temp/, /conduct|heat away|faster|quick/, /length|long|short/, /thick|thin|area|width/, /material|metal|copper|wood/]
+  const found = ideas.filter((r) => r.test(t)).length
+  if (found >= 4) return { correct: true, fb: `You covered ${found} of 5 key ideas. Could a Class 6 student test one of them with two spoons?` }
+  if (/metal (is|was) colder/.test(t) && !ideas[0].test(t)) return { flag: 'M1', fb: 'Careful: would a thermometer show the metal spoon at a lower temperature?' }
+  if (!ideas[2].test(t) && !ideas[3].test(t)) return { flag: 'M2', fb: 'You explained the material. What did your fair tests show about the rod itself?' }
+  return { fb: `You covered ${found} of 5 key ideas. Which idea from your lab is still missing?` }
+}
+
 // ---------- LAB: first line of the note after an unsuccessful experiment ----------
 export const PROBLEM_LEAD = {
   confounded: 'Two things changed. Can we tell which one caused the difference?',

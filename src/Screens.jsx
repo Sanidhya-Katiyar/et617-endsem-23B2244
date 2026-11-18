@@ -2,7 +2,9 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
-import { INTRO, VARIABLES, PHASES } from './content.js'
+import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection } from './content.js'
+import { getFeedback, SourceBadge } from './ai.jsx'
+import { useState } from 'react'
 export { VARIABLES }
 
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
@@ -204,6 +206,7 @@ export function Summary({ state, update, log, go }) {
     <div>
       <div className="label">Phase 5 · Discussion</div>
       <h1>Debrief</h1>
+      <Reflection state={state} update={update} log={log} />
       <div className="card">
         <h3>Your fair tests</h3>
         {pairs.length === 0 && <p className="warn">No fair-test pairs yet. Go back to the lab and change one variable at a time.</p>}
@@ -226,6 +229,28 @@ export function Summary({ state, update, log, go }) {
       </div>
       <p className="good">Session complete. Your progress is saved, so next time you can resume, or start fresh and beat your badges.</p>
       <button onClick={finish}>Finish session</button>
+    </div>
+  )
+}
+
+// DISCUSSION / REFLECTION (Pedaste phase 5): explain it to a junior, checked by AI (or the offline rubric).
+function Reflection({ state, update, log }) {
+  const r = state.reflection || { text: '', result: null }
+  const [busy, setBusy] = useState(false)
+  const check = async () => {
+    setBusy(true)
+    const result = await getFeedback('reflect', r.text, {}, checkReflection)
+    setBusy(false)
+    update({ reflection: { ...r, result } })
+    log('reflection', { text: r.text, source: result.source, correct: !!result.correct, flag: result.flag, reason: result.reason })
+  }
+  return (
+    <div className="card">
+      <div className="label">Explain it to a junior</div>
+      <p>{REFLECT_PROMPT}</p>
+      <textarea rows="3" value={r.text} onChange={(e) => update({ reflection: { ...r, text: e.target.value } })} />
+      <button disabled={busy || r.text.trim().length < 15} onClick={check}>{busy ? 'Checking…' : 'Get feedback'}</button>
+      {r.result && <div className="note"><SourceBadge result={r.result} />{r.result.fb}</div>}
     </div>
   )
 }
