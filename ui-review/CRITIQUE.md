@@ -19,3 +19,14 @@ Screenshots are in `ui-review/round1/` (before) and `ui-review/round2/` (after),
 - The Debrief "fair tests" sentences are long. A mono table would scan better.
 - The diagnostic and the intro cards use the same flat card as everything else; they could look more like a challenge.
 - At 360 px the top nav plus stepper takes about 130 px before any content.
+
+## Round 2 (after comparing round1 vs round2 screenshots)
+**Improved:** the lab now reads as one instrument (rod, readouts and live graph in one column), and the warning note sits directly under the apparatus. The panel labels no longer wrap badly. The welcome screen leads with plain verbs, and the 360 px table fits.
+
+**Fixed in round 2:**
+1. **The graph's labels were oversized at 1280 px** once the graph moved into the wide stage. → Lab → Cap the graph at 620 px.
+2. **Double borders.** The "Why am I seeing this?" note inside the warning note had a second border. → Lab / Challenge → Nested why-notes become quiet asides, and the note title is a clear 16 px heading.
+3. **The rod looked "too small"** at short lengths. → Lab → Label it "rod drawn to scale · 50 cm = full width", so the size reads as data, not a bug.
+4. **The 360 px header was tall.** → All → Hide the "inquiry notebook" tagline and tighten the header padding on mobile.
+
+**Still weak:** Challenge as one long scroll; Debrief fair-test sentences are long. Both are out of scope for the time left.

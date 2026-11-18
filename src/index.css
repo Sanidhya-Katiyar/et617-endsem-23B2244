@@ -190,3 +190,17 @@ td:nth-child(6) { white-space: nowrap; }
   table { font-size: 12px; }
   th, td { padding: 5px 4px; }
 }
+
+/* ---------- UI polish round 2 ---------- */
+.stage .graph { max-width: 620px; }
+/* a "why" note inside another note: no second border, just a quiet aside */
+.note .why, .remedy .why { border-left: 0; background: none; padding: 0; margin: 4px 0 8px; }
+.note > b:first-child { display: block; font-size: 16px; }
+.note .row { margin-top: 12px; }
+.rod-wrap::after { content: 'rod drawn to scale · 50 cm = full width'; position: absolute; right: 0; top: 0; font-family: var(--mono); font-size: 10.5px; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .brand span { display: none; }
+  .top-inner { padding: 8px 16px; gap: 8px; }
+  .top nav button { font-size: 13px; }
+  .rod-wrap::after { display: none; }
+}
