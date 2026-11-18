@@ -2,7 +2,7 @@
 // with feedback written for the correct answer and for misconceptions M1 and M2, then an Olympiad extension.
 import { useState } from 'react'
 import { Why } from './Adapt.jsx'
-import { QUESTIONS, EXTENSION, REMEDIATION, BONUS, checkWritten, THRESHOLDS, THINKING_LABEL } from './content.js'
+import { QUESTIONS, EXTENSION, REMEDIATION, BONUS, checkWritten, THRESHOLDS, THINKING_LABEL, LAW, WRITE_MORE } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
 function Question({ q, answer, onAnswer }) {
@@ -61,6 +61,7 @@ function Question({ q, answer, onAnswer }) {
         <div>
           <textarea rows="3" value={done ? answer.value : value} disabled={done} onChange={(e) => setValue(e.target.value)} />
           <button disabled={busy || done || value.trim().length < 10} onClick={submitWritten}>{busy ? THINKING_LABEL : 'Submit explanation'}</button>
+          {!done && value.trim().length < 10 && <span className="small-note" style={{ marginLeft: 8 }}>{WRITE_MORE}</span>}
         </div>
       )}
       {done && (
@@ -135,6 +136,7 @@ export function Challenge({ state, update, log, go }) {
     if (newStreak >= THRESHOLDS.streakForHarder && !state.bonus) log('adaptation', { rule: 'performance_harder', streak: newStreak })
   }
   const allDone = QUESTIONS.every((q) => answers[q.id])
+  const lawDone = LAW.steps.every((s) => (state.law || {})[s.id] === s.answer)
   const score = QUESTIONS.filter((q) => answers[q.id]?.correct).length
 
   // after each question: remediation card + retry if it showed M1/M2 (only the first time for each misconception)
@@ -163,6 +165,7 @@ export function Challenge({ state, update, log, go }) {
         <div key={q.id}>
           <Question q={q} answer={answers[q.id]} onAnswer={onAnswer} />
           {afterQuestion(q)}
+          {q.id === 'q5' && <BuildLaw state={state} update={update} log={log} />}
         </div>
       ))}
       {state.bonus && (
@@ -171,13 +174,52 @@ export function Challenge({ state, update, log, go }) {
           <Question q={BONUS} answer={answers.bonus} onAnswer={onAnswer} />
         </div>
       )}
-      {(allDone || state.track === 'olympiad') && (
+      {(lawDone || state.track === 'olympiad') && (
         <>
-          <h3>Olympiad extension: Fourier's law (for fast finishers)</h3>
+          <h3>Olympiad extension: use your law (for fast finishers)</h3>
           {EXTENSION.map((q) => <Question key={q.id} q={q} answer={answers[q.id]} onAnswer={onAnswer} />)}
-          <button onClick={() => go('summary')}>Next phase: Discussion →</button>
         </>
       )}
+      <p><button disabled={!(allDone || lawDone)} onClick={() => go('summary')}>Next phase: Discussion →</button>
+        {!(allDone || lawDone) && <span className="small-note" style={{ marginLeft: 8 }}>Build the law or answer all questions to continue.</span>}</p>
+    </div>
+  )
+}
+
+// BUILD THE LAW: the learner decides, from her own fair tests, how each quantity changes the rate of heat flow.
+// Each correct decision places a symbol in the formula: on top (rate goes up) or underneath (rate goes down).
+function BuildLaw({ state, update, log }) {
+  const law = state.law || {}
+  const choose = (step, option) => {
+    update({ law: { ...law, [step.id]: option } })
+    log('law_step', { quantity: step.id, choice: option, correct: option === step.answer })
+  }
+  const placed = (where) => LAW.steps.filter((s) => s.place === where && law[s.id] === s.answer).map((s) => s.symbol)
+  const top = placed('top'), bottom = placed('bottom')
+  const complete = LAW.steps.every((s) => law[s.id] === s.answer)
+  return (
+    <div className="card law">
+      <div className="label">{LAW.title}</div>
+      <p>{LAW.intro}</p>
+      {LAW.steps.map((s) => (
+        <div key={s.id} className="law-step">
+          <div><b className="mono">{s.symbol}</b> · {s.name} goes up. <span className="small-note">Your evidence: {s.evidence}</span></div>
+          <div className="row">
+            {LAW.options.map((o) => (
+              <button key={o} className={law[s.id] === o ? '' : 'secondary'} onClick={() => choose(s, o)}>{o}</button>
+            ))}
+          </div>
+          {law[s.id] && law[s.id] !== s.answer && <div className="note">{s.wrong}</div>}
+        </div>
+      ))}
+      <div className="formula mono" aria-label="Formula built so far">
+        <span>H ∝</span>
+        <span className="frac">
+          <span className="num">{top.length ? top.join(' · ') : '?'}</span>
+          <span className="den">{bottom.length ? bottom.join(' · ') : '?'}</span>
+        </span>
+      </div>
+      {complete && <div className="note"><b>{LAW.done}</b><br />H = k · A · ΔT / L<br /><span className="small-note">{LAW.nuance}</span></div>}
     </div>
   )
 }

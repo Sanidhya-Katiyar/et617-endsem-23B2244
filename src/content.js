@@ -29,6 +29,8 @@ export const HOOK_ANSWER_TEXT = { metal: 'the metal spoon is colder', wood: 'the
 
 // Label on feedback buttons while the AI is working
 export const THINKING_LABEL = 'Thinking…'
+// Shown under a written answer until it is long enough to submit
+export const WRITE_MORE = 'Write at least one full sentence (10+ characters) to submit.'
 
 // ---------- PHYSICS + MATERIALS ----------
 // Welcome screen copy
@@ -174,6 +176,27 @@ export const REMEDIATION = {
 }
 
 // ---------- PERFORMANCE: harder question after 2 correct in a row ----------
+// ---------- CONCLUSION: "Build the law" (learner constructs Fourier's law from her own lab evidence) ----------
+// Each step asks what happens to the RATE of heat flow when one quantity goes UP (everything else fixed).
+// Correct answers place the symbol on top (rate goes up) or underneath (rate goes down) of the formula.
+export const LAW = {
+  title: 'Build the law yourself',
+  intro: "Let's turn your fair tests into one rule. For each quantity, decide: if it goes UP and everything else stays the same, does heat flow faster or slower?",
+  options: ['Faster', 'Slower', 'No change'],
+  steps: [
+    { id: 'k', symbol: 'k', name: 'conductivity of the material', evidence: 'Copper (k = 400) vs steel (k = 50), same rod.', answer: 'Faster', place: 'top',
+      wrong: 'Look at your fair pairs: which material made the far bead drop sooner, the one with the bigger k or the smaller k?' },
+    { id: 'A', symbol: 'A', name: 'cross-section area (thickness)', evidence: 'Thick rod vs thin rod: thick reached 60 °C in 127 s, thin in 160 s.', answer: 'Faster', place: 'top',
+      wrong: 'Compare the thick and thin trials. Which one got heat to the far end first?' },
+    { id: 'dT', symbol: 'ΔT', name: 'temperature difference (hotter source)', evidence: 'Source 100 °C vs 150 °C: 133 s vs 83 s.', answer: 'Faster', place: 'top',
+      wrong: 'A hotter flame makes a bigger difference between the two ends. Did that speed things up or slow them down?' },
+    { id: 'L', symbol: 'L', name: 'length of the rod', evidence: 'Copper 10 cm vs 20 cm: 31 s vs 133 s.', answer: 'Slower', place: 'bottom',
+      wrong: 'Check your 10 cm and 20 cm trials. Did the longer rod deliver heat faster or slower?' },
+  ],
+  done: "You built Fourier's law of heat conduction. H is the rate of heat flow (joules per second) through the rod once it has warmed up.",
+  nuance: 'Olympiad nuance: the RATE falls as 1/L, but the TIME for heat to first reach the far end grows like L² (your ×4 result). Both come from the same physics.',
+}
+
 export const BONUS = {
   id: 'bonus', type: 'numeric', text: 'Olympiad bonus: a rod takes 30 s to melt the far bead at 10 cm. Same rod material and setup, but 30 cm long. About how many seconds?',
   model: 'Time ∝ L², so 3× the length gives 9× the time: about 270 s.',
