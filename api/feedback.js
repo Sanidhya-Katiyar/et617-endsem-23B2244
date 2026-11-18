@@ -2,7 +2,7 @@
 // Socratic feedback, CHECK the reply, and return it. The API key stays on the server (process.env).
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt.js'
 
-const MODEL = 'gemini-2.5-flash'
+const MODEL = 'gemini-3.5-flash-lite'
 const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 const VERDICTS = ['correct', 'M1', 'M2', 'partial']
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ role: 'user', parts: [{ text: buildUserPrompt(kind, text, context) }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 300, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 300, responseMimeType: 'application/json' },
       }),
     })
     if (!r.ok) return res.status(502).json({ error: `Gemini HTTP ${r.status}` })
