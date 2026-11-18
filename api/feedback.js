@@ -51,9 +51,9 @@ export default async function handler(req, res) {
     generationConfig: { temperature: 0.3, maxOutputTokens: 300, responseMimeType: 'application/json' },
   }
 
-  // Total budget 4.5 s (inside the browser's 5 s limit). If the first attempt fails fast (e.g. HTTP 503),
+  // Total budget 9 s (inside the browser's 10 s limit). If the first attempt fails fast (e.g. HTTP 503),
   // retry once with whatever time is left.
-  const deadline = Date.now() + 4500
+  const deadline = Date.now() + 9000
   let raw = null, lastError = ''
   for (let attempt = 1; attempt <= 2 && raw === null && deadline - Date.now() > 1000; attempt++) {
     try { raw = await callGemini(body, deadline - Date.now()) } catch (e) { lastError = e.name === 'AbortError' ? 'timeout' : e.message }

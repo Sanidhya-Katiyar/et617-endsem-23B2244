@@ -2,7 +2,7 @@
 // with feedback written for the correct answer and for misconceptions M1 and M2, then an Olympiad extension.
 import { useState } from 'react'
 import { Why } from './Adapt.jsx'
-import { QUESTIONS, EXTENSION, REMEDIATION, BONUS, checkWritten, THRESHOLDS } from './content.js'
+import { QUESTIONS, EXTENSION, REMEDIATION, BONUS, checkWritten, THRESHOLDS, THINKING_LABEL } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
 function Question({ q, answer, onAnswer }) {
@@ -60,7 +60,7 @@ function Question({ q, answer, onAnswer }) {
       {q.type === 'written' && (
         <div>
           <textarea rows="3" value={done ? answer.value : value} disabled={done} onChange={(e) => setValue(e.target.value)} />
-          <button disabled={busy || done || value.trim().length < 10} onClick={submitWritten}>{busy ? 'Checking…' : 'Submit explanation'}</button>
+          <button disabled={busy || done || value.trim().length < 10} onClick={submitWritten}>{busy ? THINKING_LABEL : 'Submit explanation'}</button>
         </div>
       )}
       {done && (

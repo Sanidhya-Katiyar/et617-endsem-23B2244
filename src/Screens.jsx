@@ -2,7 +2,7 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
-import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection, WELCOME } from './content.js'
+import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection, WELCOME, THINKING_LABEL } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 import { useState } from 'react'
 export { VARIABLES }
@@ -249,7 +249,7 @@ function Reflection({ state, update, log }) {
       <div className="label">Explain it to a junior</div>
       <p>{REFLECT_PROMPT}</p>
       <textarea rows="3" value={r.text} onChange={(e) => update({ reflection: { ...r, text: e.target.value } })} />
-      <button disabled={busy || r.text.trim().length < 15} onClick={check}>{busy ? 'Checking…' : 'Get feedback'}</button>
+      <button disabled={busy || r.text.trim().length < 15} onClick={check}>{busy ? THINKING_LABEL : 'Get feedback'}</button>
       {r.result && <div className="note"><SourceBadge result={r.result} />{r.result.fb}</div>}
     </div>
   )

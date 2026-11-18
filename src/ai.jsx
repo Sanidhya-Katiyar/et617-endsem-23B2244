@@ -1,5 +1,7 @@
+import { THRESHOLDS } from './content.js'
+
 // ai.js — asks our /api/feedback function for AI feedback on a written answer.
-// On an error, a 5 s timeout or a failed check, it FALLS BACK to the offline keyword checker.
+// On an error, a timeout (THRESHOLDS.aiTimeoutMs) or a failed check, it FALLS BACK to the offline keyword checker.
 // Add ?ai=off to the URL to force the fallback (handy for demos).
 
 export async function getFeedback(kind, text, context, offlineCheck) {

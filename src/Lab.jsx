@@ -5,7 +5,7 @@ import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
 import { Why } from './Adapt.jsx'
 import { Flame, Thermo, Clock } from './Icons.jsx'
-import { HINTS, THRESHOLDS, checkConclusion, PROBLEM_LEAD } from './content.js'
+import { HINTS, THRESHOLDS, checkConclusion, PROBLEM_LEAD, THINKING_LABEL } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
 const DEFAULT_SETUP = { material: 'copper', length: 20, area: 'medium', sourceT: 100 }
@@ -358,7 +358,7 @@ function Conclusion({ state, update, log }) {
       <b>What do we notice? Write your conclusion.</b>
       <p style={{ fontSize: 14 }}>Which variables change the time? Use your table as evidence.</p>
       <textarea rows="2" value={c.text} onChange={(e) => update({ conclusion: { ...c, text: e.target.value } })} />
-      <button disabled={busy || c.text.trim().length < 10} onClick={check}>{busy ? 'Checking…' : 'Check my conclusion'}</button>
+      <button disabled={busy || c.text.trim().length < 10} onClick={check}>{busy ? THINKING_LABEL : 'Check my conclusion'}</button>
       {c.result && <p className={c.result.correct ? 'good' : c.result.flag ? 'bad' : 'warn'}><SourceBadge result={c.result} />{c.result.fb}</p>}
     </div>
   )
