@@ -5,7 +5,7 @@ const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypot
 
 // Placeholders for screens built in later commits.
 const Soon = () => <p>Coming next…</p>
-export const Lab = Soon
+
 export const Challenge = Soon
 export const Summary = Soon
 

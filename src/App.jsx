@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react'
 import { loadState, saveState, addLog, STEPS } from './store.js'
 import * as S from './Screens.jsx'
+import { Lab } from './Lab.jsx'
 
 const SCREENS = {
-  welcome: S.Welcome, hook: S.Hook, hypothesis: S.Hypothesis, lab: S.Lab,
+  welcome: S.Welcome, hook: S.Hook, hypothesis: S.Hypothesis, lab: Lab,
   challenge: S.Challenge, summary: S.Summary, log: S.LearningLog, about: S.About,
 }
 
