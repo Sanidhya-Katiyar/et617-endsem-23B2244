@@ -4,11 +4,57 @@ import { freshState, logToCsv, downloadFile } from './store.js'
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
 
 // Placeholders for screens built in later commits.
-export const Hook = () => <p>Coming next…</p>
-export const Hypothesis = Hook
-export const Lab = Hook
-export const Challenge = Hook
-export const Summary = Hook
+const Soon = () => <p>Coming next…</p>
+export const Hypothesis = Soon
+export const Lab = Soon
+export const Challenge = Soon
+export const Summary = Soon
+
+// Concept intro, in small chunks shown one at a time (cognitive load). No formula yet.
+const INTRO = [
+  '1/3 · Heat always flows from hotter to colder, until both are at the same temperature. After a night on the table, both spoons have reached room temperature.',
+  '2/3 · Materials pass heat along at very different rates. A metal passes energy from particle to particle quickly; wood passes it slowly. This "conduction rate" is what you will investigate.',
+  '3/3 · Your skin does not sense temperature. It senses how fast heat leaves your hand. Something that pulls heat away fast feels cold. Can the shape of an object change how fast heat moves too? Find out in the lab.',
+]
+
+export function Hook({ state, update, log, go }) {
+  const { answer, confidence, introStep } = state.hook
+  const setHook = (patch) => update({ hook: { ...state.hook, ...patch } })
+
+  const submit = (choice) => {
+    setHook({ answer: choice })
+    log('hook_answer', { answer: choice, confidence })
+    if (choice === 'metal') log('misconception_flag', { id: 'M1', note: 'thinks metal at room temp is colder' })
+  }
+
+  return (
+    <div>
+      <h2>🧩 Level 1: The Spoon Puzzle</h2>
+      <div className="card">
+        <p>A metal spoon and a wooden spoon have both been on the table all night. Which is <b>colder</b>?</p>
+        <label>How confident are you? {confidence}/5
+          <input type="range" min="1" max="5" value={confidence} disabled={answer !== null}
+            onChange={(e) => setHook({ confidence: Number(e.target.value) })} />
+        </label>
+        <div className="row">
+          {[['metal', 'The metal spoon'], ['wood', 'The wooden spoon'], ['same', 'Both are the same temperature']].map(([id, text]) => (
+            <button key={id} className={answer === id ? '' : 'secondary'} disabled={answer !== null} onClick={() => submit(id)}>{text}</button>
+          ))}
+        </div>
+      </div>
+
+      {answer !== null && (
+        <>
+          <p>Answer locked in. Don't worry about whether you're right yet: you'll test it in the lab and revisit it in the challenge.</p>
+          <div className="card">{INTRO[introStep]}</div>
+          {introStep < INTRO.length - 1
+            ? <button onClick={() => setHook({ introStep: introStep + 1 })}>Next</button>
+            : <button onClick={() => go('hypothesis')}>Level 2: Make a hypothesis →</button>}
+        </>
+      )}
+    </div>
+  )
+}
 
 export function Welcome({ state, go, setState }) {
   const hasProgress = state.hook.answer !== null || state.trials.length > 0
