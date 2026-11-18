@@ -159,3 +159,34 @@ The log can be exported as CSV or JSON from the Learning log screen.
 - **AI:** Google Gemini API (`gemini-3.5-flash-lite`) via REST `fetch`, with no SDK.
 - **Hosting:** Vercel (static site + serverless function). Code is on GitHub.
 - **AI assistance:** Claude Code (Claude Opus 5.5) wrote the code from my specifications; I reviewed and tested it.
+
+## Research frameworks → features
+| Framework | Feature in the app | Where |
+|---|---|---|
+| **Inquiry cycle** (Pedaste et al., 2015) | 5-phase stepper: Orientation (1.5 min) → Conceptualisation (1.5) → Investigation (4) → Conclusion (2) → Discussion (1). Conceptualisation is clickable from any phase, so revising the hypothesis is a cycle, not a line | `PHASES` in `src/content.js`, stepper in `src/App.jsx` |
+| **Implicit scaffolding** (Podolefsky, Moore & Perkins, 2013; PhET) | Guidance comes from the interface: live thermal gradient on the rod, wax beads dropping at 60 °C, a probe tag that shows °C where you drag, the graph drawing in real time, one instruction line per screen | `src/Lab.jsx` |
+| **Experiment design tool** (van Riesen et al., 2018): *answers the design challenge* | "What am I testing?" chooser; other variables get "kept constant" tags (turning to "changed" if touched). Confounded runs are not blocked: they run, then the note asks "Two things changed. Can we tell which one caused the difference?" and offers **Run a fair test** (resets only the extra variables). "Fair pairs" auto-groups trials that differ in exactly one variable. Graded hints: question → what to hold constant → highlight two rows. The rule is never stated | `src/Lab.jsx`, `HINTS`/`PROBLEM_LEAD` in `src/content.js` |
+| **Expertise reversal** (Kalyuga, 2007) | Olympiad track: hints faded behind "Need a nudge?", fewer prompts, quantitative predict-the-time tasks, Fourier extension. Explorer track: hint 1 shown immediately, plus intro cards. Each adaptation explains itself in a "Why am I seeing this?" note | `src/Lab.jsx`, `src/Adapt.jsx` |
+| **Cognitive load theory** (Sweller, 1988) | Chunked intro cards, one question at a time in the diagnostic, short notes, worked comparison offered when struggling | `INTRO`, `THRESHOLDS` |
+| **C4 10-minute sessions** | Phase minute budget that sums to 10 min plus a live clock; autosave after every action; exact resume (screen + trials) | `src/App.jsx`, `src/store.js` |
+
+**Easy live changes:** every question, feedback line, hint, rubric, threshold and material constant is in `src/content.js`.
+
+## References
+- Kalyuga, S. (2007). Expertise reversal effect and its implications for learner-tailored instruction. *Educational Psychology Review, 19*(4), 509–539.
+- Pedaste, M., Mäeots, M., Siiman, L. A., de Jong, T., van Riesen, S. A. N., Kamp, E. T., Manoli, C. C., Zacharia, Z. C., & Tsourlidaki, E. (2015). Phases of inquiry-based learning: Definitions and the inquiry cycle. *Educational Research Review, 14*, 47–61.
+- Podolefsky, N. S., Moore, E. B., & Perkins, K. K. (2013). Implicit scaffolding in interactive simulations: Design strategies to support multiple educational goals. arXiv:1306.6544.
+- Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. *Cognitive Science, 12*(2), 257–285.
+- van Riesen, S. A. N., Gijlers, H., Anjewierden, A., & de Jong, T. (2018). The influence of prior knowledge on experiment design guidance in a science inquiry context. *International Journal of Science Education, 40*(11), 1327–1344.
+
+## Updated click paths (Phase 3 UI)
+- **Unsuccessful experiment (design challenge):**
+  1. In the Investigation panel, choose **What am I testing? → Length**, then click **Run trial** (copper 20 cm).
+  2. Click **Aluminium** and set the length to 10. The tags show "changed".
+  3. Click **Run trial**. The note says "Two things changed. Can we tell which one caused the difference?"
+  4. Click **Run a fair test**. Only the material resets to copper.
+  5. Click **Run trial**. Fair pairs lists Length: T1 20 cm vs T3 10 cm.
+- **Olympiad track:** answer the 3 warm-up questions correctly. Lab hints appear behind **Need a nudge?**.
+- **Explorer track:** hint 1 is shown immediately, then **Next hint**.
+- **Discussion:** write the "Explain it to a junior" answer, then click **Get feedback**. You get the AI badge, or "Offline feedback (AI unavailable)".
+- **Live change demo:** edit `src/content.js`. For example, change `THRESHOLDS.streakForHarder` or a feedback string, then run `npm run build` and `vercel --prod --yes`.
