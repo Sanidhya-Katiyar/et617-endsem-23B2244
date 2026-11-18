@@ -16,14 +16,21 @@ export const THRESHOLDS = {
 
 // ---------- INQUIRY CYCLE (Pedaste et al., 2015): 5 phases with a minute budget that sums to 10 min (C4) ----------
 export const PHASES = [
-  { id: 'orientation', name: 'Orientation', screen: 'hook', minutes: 1.5 },
-  { id: 'conceptualisation', name: 'Conceptualisation', screen: 'hypothesis', minutes: 1.5 },
-  { id: 'investigation', name: 'Investigation', screen: 'lab', minutes: 4 },
-  { id: 'conclusion', name: 'Conclusion', screen: 'challenge', minutes: 2 },
-  { id: 'discussion', name: 'Discussion', screen: 'summary', minutes: 1 },
+  { id: 'orientation', kid: 'Puzzle', name: 'Orientation', screen: 'hook', minutes: 1.5 },
+  { id: 'conceptualisation', kid: 'Predict', name: 'Conceptualisation', screen: 'hypothesis', minutes: 1.5 },
+  { id: 'investigation', kid: 'Experiment', name: 'Investigation', screen: 'lab', minutes: 4 },
+  { id: 'conclusion', kid: 'Challenge', name: 'Conclusion', screen: 'challenge', minutes: 2 },
+  { id: 'discussion', kid: 'Explain', name: 'Discussion', screen: 'summary', minutes: 1 },
 ]
 
 // ---------- PHYSICS + MATERIALS ----------
+// Welcome screen copy
+export const WELCOME = {
+  kicker: 'Challenge mode',
+  title: 'What controls how fast heat travels?',
+  lede: 'Five quick phases. One rod. Puzzles a textbook list can\'t solve.',
+}
+
 export const PHYSICS = { room: 25, melt: 60, maxTime: 300, surfaceLoss: 10 } // °C, °C, s, W/m²K
 export const MATERIALS = {
   copper: { name: 'Copper', k: 400, rho: 8960, c: 385 },
@@ -193,7 +200,7 @@ export function checkConclusion(text) {
 }
 
 // ---------- DISCUSSION: reflection prompt + offline rubric ----------
-export const REFLECT_PROMPT = 'Explain it to a junior: in 2 or 3 sentences, tell a Class 6 student what controls how fast heat travels along a rod, and why the metal spoon feels colder.'
+export const REFLECT_PROMPT = 'In 2 or 3 sentences, tell a Class 6 student what controls how fast heat travels along a rod, and why the metal spoon feels colder.'
 export function checkReflection(text) {
   const t = text.toLowerCase()
   const ideas = [/same|equal|room temp/, /conduct|heat away|faster|quick/, /length|long|short/, /thick|thin|area|width/, /material|metal|copper|wood/]

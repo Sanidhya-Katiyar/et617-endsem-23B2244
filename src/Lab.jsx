@@ -193,6 +193,26 @@ export function Lab({ state, update, log, go, setState }) {
               <span className="small-note">{reached ? 'Far bead dropped' : run ? 'Watching the far bead' : 'Starts on Run'}</span></div>
             <div className="readout"><span className="label">Far end</span><span className="reading mono">{profile[profile.length - 1].toFixed(1)} °C</span></div>
           </div>
+          <div className="notebook">
+        <div className="label">Notebook · far-end temperature vs time</div>
+        <svg viewBox="0 0 320 170" className="graph" role="img" aria-label="Far-end temperature against time for each trial">
+          {[0, 60, 120, 180, 240, 300].map((s) => <g key={s}><line x1={gx(s)} x2={gx(s)} y1="10" y2="130" className="gridline" /><text x={gx(s)} y="142" className="tick" textAnchor="middle">{s}</text></g>)}
+          {[ROOM, MELT, yMax].map((T) => <text key={T} x="26" y={gy(T) + 3} className="tick" textAnchor="end">{T}</text>)}
+          <line x1="30" y1="130" x2="290" y2="130" className="axis" />
+          <line x1="30" y1="10" x2="30" y2="130" className="axis" />
+          <line x1="30" x2="290" y1={gy(MELT)} y2={gy(MELT)} className="melt" />
+          <text x="288" y={gy(MELT) - 3} className="tick" textAnchor="end">wax melts 60 °C</text>
+          <text x="160" y="158" className="tick" textAnchor="middle">time (s)</text>
+          <text x="6" y="8" className="tick">°C</text>
+          {trials.slice(-4).map((tr) => tr.series && (
+            <polyline key={tr.n} fill="none" className="past" points={tr.series.map((T, i) => `${gx(i * 5)},${gy(Math.min(T, yMax))}`).join(' ')} />
+          ))}
+          {trials.slice(-4).map((tr) => tr.series && (
+            <text key={'l' + tr.n} className="tick" x={gx((tr.series.length - 1) * 5) + 3} y={gy(Math.min(tr.series[tr.series.length - 1], yMax)) + 3}>T{tr.n}</text>
+          ))}
+          <polyline fill="none" className="live" points={shown.map((s) => `${gx(s.t)},${gy(Math.min(s.profile[s.profile.length - 1], yMax))}`).join(' ')} />
+        </svg>
+          </div>
         </section>
 
         <aside className="panel" aria-label="Controls">
@@ -241,26 +261,6 @@ export function Lab({ state, update, log, go, setState }) {
         </aside>
       </div>
 
-      <section className="notebook">
-        <div className="label">Notebook · far-end temperature vs time</div>
-        <svg viewBox="0 0 320 170" className="graph" role="img" aria-label="Far-end temperature against time for each trial">
-          {[0, 60, 120, 180, 240, 300].map((s) => <g key={s}><line x1={gx(s)} x2={gx(s)} y1="10" y2="130" className="gridline" /><text x={gx(s)} y="142" className="tick" textAnchor="middle">{s}</text></g>)}
-          {[ROOM, MELT, yMax].map((T) => <text key={T} x="26" y={gy(T) + 3} className="tick" textAnchor="end">{T}</text>)}
-          <line x1="30" y1="130" x2="290" y2="130" className="axis" />
-          <line x1="30" y1="10" x2="30" y2="130" className="axis" />
-          <line x1="30" x2="290" y1={gy(MELT)} y2={gy(MELT)} className="melt" />
-          <text x="288" y={gy(MELT) - 3} className="tick" textAnchor="end">wax melts 60 °C</text>
-          <text x="160" y="158" className="tick" textAnchor="middle">time (s)</text>
-          <text x="6" y="8" className="tick">°C</text>
-          {trials.slice(-4).map((tr) => tr.series && (
-            <polyline key={tr.n} fill="none" className="past" points={tr.series.map((T, i) => `${gx(i * 5)},${gy(Math.min(T, yMax))}`).join(' ')} />
-          ))}
-          {trials.slice(-4).map((tr) => tr.series && (
-            <text key={'l' + tr.n} className="tick" x={gx((tr.series.length - 1) * 5) + 3} y={gy(Math.min(tr.series[tr.series.length - 1], yMax)) + 3}>T{tr.n}</text>
-          ))}
-          <polyline fill="none" className="live" points={shown.map((s) => `${gx(s.t)},${gy(Math.min(s.profile[s.profile.length - 1], yMax))}`).join(' ')} />
-        </svg>
-      </section>
 
       {problem && !running && (
         <div className="note">
@@ -304,7 +304,7 @@ export function Lab({ state, update, log, go, setState }) {
       {/* conclusion box is rendered below the table */}
       <div style={{ overflowX: 'auto' }}>
         <table>
-          <thead><tr><th>#</th><th>Material</th><th>Length</th><th>Section</th><th>Source</th><th>Time for far end to reach 60 °C</th><th>Prediction</th></tr></thead>
+          <thead><tr><th>#</th><th>Material</th><th>Length</th><th>Section</th><th>Source</th><th>Far end hits 60 °C</th><th>Predicted</th></tr></thead>
           <tbody>
             {trials.map((t, i) => (
               <tr key={i} className={highlighted.includes(i) ? 'highlight' : ''}>

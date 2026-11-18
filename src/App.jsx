@@ -55,7 +55,7 @@ export default function App() {
             return (
               <button key={p.id} className={cls} aria-current={i === phaseIndex ? 'step' : undefined}
                 onClick={canJump ? () => go('hypothesis') : undefined} tabIndex={canJump ? 0 : -1}>
-                <span className="num">{i + 1}</span><span className="pname">{p.name}</span><span className="min">{p.minutes} min</span>
+                <span className="num">{i + 1}</span><span className="pname">{p.kid}</span><span className="min">{p.name} · {p.minutes} min</span>
               </button>
             )
           })}

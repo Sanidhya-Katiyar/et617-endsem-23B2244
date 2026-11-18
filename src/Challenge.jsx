@@ -50,8 +50,8 @@ function Question({ q, answer, onAnswer }) {
           {(done ? answer.value : value).map((m, i) => (
             <div key={m} className="row" style={{ margin: 4 }}>
               <b style={{ width: 24 }}>{i + 1}.</b><span style={{ width: 100, textTransform: 'capitalize' }}>{m}</span>
-              {!done && <><button className="secondary" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">Up</button>
-                <button className="secondary" disabled={i === 4} onClick={() => move(i, 1)} aria-label="Move down">Down</button></>}
+              {!done && <><button className="secondary small" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">Up</button>
+                <button className="secondary small" disabled={i === 4} onClick={() => move(i, 1)} aria-label="Move down">Down</button></>}
             </div>
           ))}
           {!done && <button onClick={submitRank}>Check order</button>}

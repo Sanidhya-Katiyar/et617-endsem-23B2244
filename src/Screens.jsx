@@ -2,7 +2,7 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
-import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection } from './content.js'
+import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection, WELCOME } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 import { useState } from 'react'
 export { VARIABLES }
@@ -77,12 +77,12 @@ export function Welcome({ state, go, setState }) {
 
   return (
     <div>
-      <div className="label">Challenge mode · ET 617</div>
-      <h1>What controls how fast heat travels?</h1>
-      <p>This is not a drill. Five levels, 10 minutes, and puzzles a textbook list can't solve. Ready?</p>
+      <div className="label">{WELCOME.kicker}</div>
+      <h1>{WELCOME.title}</h1>
+      <p className="lede">{WELCOME.lede}</p>
       <div className="card">
         <div className="label">Your 10-minute inquiry</div>
-        <ol className="phases-list">{PHASES.map((p) => <li key={p.id}><b>{p.name}</b> <span className="mono">{p.minutes} min</span></li>)}</ol>
+        <ol className="phases-list">{PHASES.map((p, i) => <li key={p.id}><span className="mono n">{i + 1}</span><b>{p.kid}</b><span className="small-note">{p.name}</span><span className="mono">{p.minutes} min</span></li>)}</ol>
       </div>
       <p>Earn badges like <span className="badge">Controlled Experimenter</span> <span className="badge">Oracle</span> <span className="badge">Olympian</span></p>
       {hasProgress ? (
