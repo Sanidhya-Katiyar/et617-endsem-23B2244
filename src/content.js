@@ -24,6 +24,9 @@ export const PHASES = [
   { id: 'discussion', kid: 'Explain', name: 'Discussion', screen: 'summary', minutes: 1 },
 ]
 
+// How the hook answer is shown back on the Debrief screen
+export const HOOK_ANSWER_TEXT = { metal: 'the metal spoon is colder', wood: 'the wooden spoon is colder', same: 'both are the same temperature' }
+
 // Label on feedback buttons while the AI is working
 export const THINKING_LABEL = 'Thinking…'
 

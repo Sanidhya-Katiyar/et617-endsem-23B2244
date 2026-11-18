@@ -2,7 +2,7 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
-import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection, WELCOME, THINKING_LABEL } from './content.js'
+import { INTRO, VARIABLES, PHASES, REFLECT_PROMPT, checkReflection, WELCOME, THINKING_LABEL, HOOK_ANSWER_TEXT } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 import { useState } from 'react'
 export { VARIABLES }
@@ -35,7 +35,7 @@ export function Hook({ state, update, log, go }) {
       <div className="label">Phase 1 · Orientation</div>
       <h1>The spoon puzzle</h1>
       <div className="card">
-        <p>Let's start with a puzzle. A metal spoon and a wooden spoon have both been on the table <b>all night</b>. Which one is <span className="key">colder</span>?</p>
+        <p>Let's start with a puzzle. A metal spoon and a wooden spoon have both been on the table <b>all night</b>. Which one is <span className="key">colder?</span></p>
         <label>How confident are you? {confidence}/5
           <input type="range" min="1" max="5" value={confidence} disabled={answer !== null}
             onChange={(e) => setHook({ confidence: Number(e.target.value) })} />
@@ -211,12 +211,12 @@ export function Summary({ state, update, log, go }) {
         <h3>Your fair tests</h3>
         {pairs.length === 0 && <p className="warn">No fair-test pairs yet. Go back to the lab and change one variable at a time.</p>}
         <ul>{pairs.slice(0, 6).map((p, i) => (
-          <li key={i}>Changing only <b>{VARIABLES.find(([id]) => id === p.v)[1].toLowerCase()}</b>: {label(p.a)} → {time(p.a)}; {label(p.b)} → {time(p.b)}</li>
+          <li key={i} className="mono" style={{ fontSize: 13 }}><b>{VARIABLES.find(([id]) => id === p.v)[1]}</b>: T{p.a.n} {time(p.a)} vs T{p.b.n} {time(p.b)}</li>
         ))}</ul>
         <p>Challenge score: {['q1', 'q2', 'q3', 'q4', 'q5', 'q6'].filter((q) => ch[q]?.correct).length}/6 · Hints used: {state.hintsUsed} · Hypothesis revisions: {state.hypothesis.revisions}</p>
       </div>
       <div className="card">
-        <p>Confidence on the spoon puzzle at the start: <b>{hook.confidence}/5</b> (you answered "{hook.answer}")</p>
+        <p>Confidence on the spoon puzzle at the start: <b>{hook.confidence}/5</b> (you answered: {HOOK_ANSWER_TEXT[hook.answer] || "no answer"})</p>
         <label>How confident are you now that you could explain heat conduction to a friend? {state.confAfter}/5
           <input type="range" min="1" max="5" value={state.confAfter} onChange={(e) => update({ confAfter: Number(e.target.value) })} />
         </label>
