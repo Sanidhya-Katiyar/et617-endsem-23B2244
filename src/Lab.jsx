@@ -122,8 +122,9 @@ export function Lab({ state, update, log, go, setState }) {
   const problem = findProblem(trials, state.hypothesis.vars)
   const hintLevel = state.hint && state.hint.trial === trials.length ? state.hint.level : 0
   const showHint = () => {
-    update({ hint: { trial: trials.length, level: hintLevel + 1 }, hintsUsed: state.hintsUsed + 1 })
-    log('hint_used', { trial: trials.length, problem: problem.type, level: hintLevel + 1 })
+    const next = Math.max(hintLevel, state.track === 'olympiad' ? 0 : 1) + 1 // Explorer already sees hint 1
+    update({ hint: { trial: trials.length, level: next }, hintsUsed: state.hintsUsed + 1 })
+    log('hint_used', { trial: trials.length, problem: problem.type, level: next })
   }
   const highlighted = problem && hintLevel >= 3 ? problem.rows : []
 
@@ -271,7 +272,7 @@ export function Lab({ state, update, log, go, setState }) {
             : 'You are on the Explorer track, so the first hint is shown straight away.'}</Why>
           {problem.hints.slice(0, Math.max(hintLevel, state.track === 'olympiad' ? 0 : 1)).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
           <div className="row">
-            {hintLevel < 3 && <button className="secondary" onClick={showHint}>{state.track === 'olympiad' ? (hintLevel === 0 ? 'Need a nudge?' : `Another nudge (${hintLevel + 1} of 3)`) : `Next hint (${Math.max(hintLevel, 1) + 1} of 3)`}</button>}
+            {Math.max(hintLevel, state.track === 'olympiad' ? 0 : 1) < 3 && <button className="secondary" onClick={showHint}>{state.track === 'olympiad' ? (hintLevel === 0 ? 'Need a nudge?' : `Another nudge (${hintLevel + 1} of 3)`) : `Next hint (${Math.max(hintLevel, 1) + 1} of 3)`}</button>}
             {problem.type === 'confounded' && <button onClick={makeFair}>Run a fair test</button>}
             <button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button>
           </div>
