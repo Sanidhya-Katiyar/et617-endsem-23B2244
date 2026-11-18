@@ -63,7 +63,7 @@ Welcome/Resume → Hook → Hypothesis → Lab ⇄ (Revise hypothesis) → Chall
 - **No answer reveals:** she gets puzzles and hints instead.
 
 ## Adaptivity rules (src/Adapt.jsx, src/Challenge.jsx, src/Lab.jsx)
-Every adaptation shows a "🤖 Why am I seeing this?" note and logs an `adaptation` event.
+Every adaptation shows a "Why am I seeing this?" note and logs an `adaptation` event.
 
 | Signal | Rule | What changes |
 |---|---|---|
@@ -80,7 +80,7 @@ Every adaptation shows a "🤖 Why am I seeing this?" note and logs an `adaptati
 - **Output:** `{verdict: correct|M1|M2|partial, feedback, socratic_question}`.
 - **Check before showing:** the JSON shape is valid, the verdict is allowed, the reply is ≤ 60 words, and during the lab it is rejected if it reveals the answer (regex for "length matters", "×4", "squared"…).
 - **Fallback:** on an error, a 5 s timeout or a failed check, the keyword rubric checker runs instead, labelled "Offline feedback (AI unavailable)". `?ai=off` forces the fallback for demos.
-- AI output carries an "✨ AI feedback" badge.
+- AI output carries an "AI feedback" badge.
 
 ## Misconception discovery
 At the start of the Challenge there's a table: *You predicted* vs *What actually happened*.

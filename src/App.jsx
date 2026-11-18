@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { loadState, saveState, addLog, STEPS } from './store.js'
 import * as S from './Screens.jsx'
+import { PHASES } from './content.js'
 import { Lab } from './Lab.jsx'
 import { Challenge } from './Challenge.jsx'
 
@@ -32,27 +33,39 @@ export default function App() {
 
   const elapsed = state.elapsedBefore + Math.round((Date.now() - state.stepStart) / 1000)
   const mmss = (t) => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`
-  const stepIndex = STEPS.indexOf(state.screen)
+  const phaseIndex = PHASES.findIndex((p) => p.screen === state.screen)
   const Screen = SCREENS[state.screen] || S.Welcome
 
   return (
     <div className="app">
-      <nav>
-        <strong style={{ alignSelf: 'center', marginRight: 'auto' }}>🔥 Heat Conduction Lab</strong>
-        <button onClick={() => go('welcome')}>Home</button>
-        <button onClick={() => go('log')}>Learning log</button>
-        <button onClick={() => go('about')}>About</button>
-      </nav>
-      <div className="progress" title="10-minute session">
-        {STEPS.map((step, i) => (
-          <div key={step} className={'step ' + (i < stepIndex ? 'done' : i === stepIndex ? 'current' : '')} title={step} />
-        ))}
-        <span style={{ marginLeft: 8 }} className={elapsed > 600 ? 'warn' : ''}>⏱ {mmss(elapsed)} / 10:00</span>
-      </div>
+      <header className="top">
+        <div className="top-inner">
+          <div className="brand">Heat Conduction Lab<span>inquiry notebook</span></div>
+          <nav>
+            <button onClick={() => go('welcome')}>Home</button>
+            <button onClick={() => go('log')}>Learning log</button>
+            <button onClick={() => go('about')}>About</button>
+          </nav>
+        </div>
+        {/* PHASE STEPPER (Pedaste inquiry cycle). Conceptualisation is always clickable: revise the hypothesis any time. */}
+        <div className="stepper" aria-label="Inquiry phases">
+          {PHASES.map((p, i) => {
+            const canJump = p.id === 'conceptualisation' && state.hook.answer !== null
+            const cls = 'phase' + (i < phaseIndex ? ' done' : i === phaseIndex ? ' current' : '') + (canJump ? ' clickable' : '')
+            return (
+              <button key={p.id} className={cls} aria-current={i === phaseIndex ? 'step' : undefined}
+                onClick={canJump ? () => go('hypothesis') : undefined} tabIndex={canJump ? 0 : -1}>
+                <span className="num">{i + 1}</span>{p.name}<span className="min">{p.minutes} min</span>
+              </button>
+            )
+          })}
+          <div className={'clock' + (elapsed > 600 ? ' over' : '')}>{mmss(elapsed)} / 10:00</div>
+        </div>
+      </header>
       <main>
         <Screen state={state} update={update} log={log} go={go} setState={setState} />
       </main>
-      <footer>ET 617 · 23B2244</footer>
+      <footer><div>ET 617 · 23B2244</div></footer>
     </div>
   )
 }

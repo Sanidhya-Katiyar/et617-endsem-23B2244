@@ -14,6 +14,15 @@ export const THRESHOLDS = {
   timeDiffPercent: 15,        // two results "differ" if their times differ by more than this %
 }
 
+// ---------- INQUIRY CYCLE (Pedaste et al., 2015): 5 phases with a minute budget that sums to 10 min (C4) ----------
+export const PHASES = [
+  { id: 'orientation', name: 'Orientation', screen: 'hook', minutes: 1.5 },
+  { id: 'conceptualisation', name: 'Conceptualisation', screen: 'hypothesis', minutes: 1.5 },
+  { id: 'investigation', name: 'Investigation', screen: 'lab', minutes: 4 },
+  { id: 'conclusion', name: 'Conclusion', screen: 'challenge', minutes: 2 },
+  { id: 'discussion', name: 'Discussion', screen: 'summary', minutes: 1 },
+]
+
 // ---------- PHYSICS + MATERIALS ----------
 export const PHYSICS = { room: 25, melt: 60, maxTime: 300, surfaceLoss: 10 } // °C, °C, s, W/m²K
 export const MATERIALS = {
@@ -166,11 +175,11 @@ export function checkWritten(text) {
   const t = text.toLowerCase()
   const same = /same|equal|room temp/.test(t)
   const conduct = /conduct|heat away|faster|quick|draw|pull|transfer|takes? (the )?heat|absorb/.test(t)
-  if (same && conduct) return { correct: true, fb: 'Full marks on the rubric. You said ✓ same temperature and ✓ metal conducts heat away from your hand faster.' }
+  if (same && conduct) return { correct: true, fb: 'Full marks on the rubric. You named both ideas: same temperature, and metal conducts heat away from your hand faster.' }
   if (!same && /metal (is|was|spoon is) colder|colder than (the )?wood/.test(t))
     return { flag: 'M1', fb: "That's M1: the metal is not actually colder; both are at room temperature. Explain what the metal does to the heat in your hand instead." }
-  if (same) return { fb: "Half there. You have ✓ same temperature, but what does metal do to the heat from your hand that wood doesn't?" }
-  if (conduct) return { fb: "Half there. You have ✓ conduction, but what is true about the two spoons' actual temperatures?" }
+  if (same) return { fb: "Half there. You have the same-temperature idea, but what does metal do to the heat from your hand that wood doesn't?" }
+  if (conduct) return { fb: "Half there. You have the conduction idea, but what is true about the two spoons' actual temperatures?" }
   return { fb: 'Your answer needs two ideas: what the spoons\' temperatures are, and how fast each one carries heat away from your hand.' }
 }
 

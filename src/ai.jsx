@@ -34,6 +34,6 @@ export async function getFeedback(kind, text, context, offlineCheck) {
 export function SourceBadge({ result }) {
   if (!result?.source) return null
   return result.source === 'ai'
-    ? <span className="ai-badge">✨ AI feedback</span>
+    ? <span className="ai-badge">AI feedback</span>
     : <span className="ai-badge offline" title={result.reason}>Offline feedback (AI unavailable)</span>
 }

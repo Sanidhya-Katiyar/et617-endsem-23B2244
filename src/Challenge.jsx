@@ -50,8 +50,8 @@ function Question({ q, answer, onAnswer }) {
           {(done ? answer.value : value).map((m, i) => (
             <div key={m} className="row" style={{ margin: 4 }}>
               <b style={{ width: 24 }}>{i + 1}.</b><span style={{ width: 100, textTransform: 'capitalize' }}>{m}</span>
-              {!done && <><button className="secondary" disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
-                <button className="secondary" disabled={i === 4} onClick={() => move(i, 1)}>▼</button></>}
+              {!done && <><button className="secondary" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">Up</button>
+                <button className="secondary" disabled={i === 4} onClick={() => move(i, 1)} aria-label="Move down">Down</button></>}
             </div>
           ))}
           {!done && <button onClick={submitRank}>Check order</button>}
@@ -66,7 +66,7 @@ function Question({ q, answer, onAnswer }) {
       {done && (
         <>
           <p className={answer.correct ? 'good' : answer.flag ? 'bad' : 'warn'}>
-            <SourceBadge result={answer} />{answer.correct ? '✓ ' : answer.flag ? `✗ (${answer.flag}) ` : '△ '}{answer.fb}
+            <SourceBadge result={answer} /><span className="verdict">{answer.correct ? 'Correct' : answer.flag ? `${answer.flag} pattern` : 'Not yet'}</span>{answer.fb}
           </p>
           <p style={{ fontSize: 14 }}><b>Model answer:</b> {q.model}</p>
         </>
@@ -96,8 +96,8 @@ function Discovery({ state, update, log }) {
   const reveal = () => { update({ discovered: true }); log('discovery', { m1, m2vars }) }
 
   return (
-    <div className="card" style={{ borderColor: '#60a5fa' }}>
-      <h3>🔍 Your prediction vs what happened</h3>
+    <div className="card" >
+      <div className="label">Prediction vs result</div>
       <table>
         <thead><tr><th></th><th>You predicted</th><th>What actually happened</th></tr></thead>
         <tbody>
@@ -155,7 +155,8 @@ export function Challenge({ state, update, log, go }) {
 
   return (
     <div>
-      <h2>🏆 Level 4: Olympiad Challenge</h2>
+      <div className="label">Phase 4 · Conclusion</div>
+      <h1>Olympiad challenge</h1>
       <p>Let's put your lab results to work. Think like an Olympiad examiner. Score: {score}/{QUESTIONS.length}. Want to check something? <button className="secondary" onClick={() => go('lab')}>Back to lab</button></p>
       <Discovery state={state} update={update} log={log} />
       {QUESTIONS.map((q) => (
@@ -172,9 +173,9 @@ export function Challenge({ state, update, log, go }) {
       )}
       {(allDone || state.track === 'olympiad') && (
         <>
-          <h3>⚡ Olympiad extension: Fourier's law (for fast finishers)</h3>
+          <h3>Olympiad extension: Fourier's law (for fast finishers)</h3>
           {EXTENSION.map((q) => <Question key={q.id} q={q} answer={answers[q.id]} onAnswer={onAnswer} />)}
-          <button onClick={() => go('summary')}>Level 5: Debrief and badges →</button>
+          <button onClick={() => go('summary')}>Next phase: Discussion →</button>
         </>
       )}
     </div>

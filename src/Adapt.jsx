@@ -7,7 +7,7 @@ import { DIAGNOSTIC, THRESHOLDS } from './content.js'
 
 // The small "Why am I seeing this?" note shown whenever the app adapts.
 export function Why({ children }) {
-  return <div className="why">🤖 <b>Why am I seeing this?</b> {children}</div>
+  return <div className="why"><b>Why am I seeing this?</b> {children}</div>
 }
 
 // Rule: 3/3 correct → Olympiad track (skips the basic intro, gets number tasks). Otherwise → Explorer track.

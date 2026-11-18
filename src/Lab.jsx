@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
 import { Why } from './Adapt.jsx'
+import { Flame, Thermo, Clock } from './Icons.jsx'
 import { HINTS, THRESHOLDS, checkConclusion } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
@@ -12,7 +13,14 @@ const VAR_NAME = Object.fromEntries(VARIABLES.map(([id, text]) => [id, text.toLo
 const BEADS = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1]
 
 const fmtTime = (s) => (s === null ? 'did not reach in 5 min' : `${Math.floor(s / 60)}m ${s % 60}s`)
-const tempColor = (T) => `hsl(${Math.max(0, 240 * (1 - (T - ROOM) / 125))}, 85%, 50%)`
+// ONE thermal scale, used only for temperature: cool blue (25 °C) → amber (~90 °C) → hot red (150 °C)
+const SCALE = [[25, [43, 108, 176]], [90, [224, 164, 0]], [150, [192, 57, 43]]]
+const tempColor = (T) => {
+  const t = Math.min(150, Math.max(25, T))
+  const [[t0, c0], [t1, c1]] = t <= 90 ? [SCALE[0], SCALE[1]] : [SCALE[1], SCALE[2]]
+  const f = (t - t0) / (t1 - t0)
+  return `rgb(${c0.map((c, i) => Math.round(c + f * (c1[i] - c))).join(',')})`
+}
 const changedVars = (a, b) => VARIABLES.map(([id]) => id).filter((v) => a[v] !== b[v])
 const differs = (a, b) => (a.reachTime === null) !== (b.reachTime === null) ||
   (a.reachTime !== null && Math.abs(a.reachTime - b.reachTime) > (THRESHOLDS.timeDiffPercent / 100) * Math.min(a.reachTime, b.reachTime))
@@ -78,7 +86,8 @@ export function Lab({ state, update, log, go, setState }) {
       if (result.reachTime === null) score = predict.never ? 100 : 0
       else score = predict.never ? 0 : Math.max(0, Math.round(100 - (Math.abs(prediction - result.reachTime) / result.reachTime) * 100))
     }
-    const trial = { n: trials.length + 1, ...setup, reachTime: result.reachTime, changed, prediction, score }
+    const series = result.samples.filter((_, i) => i % 5 === 0).map((s) => Math.round(s.profile[s.profile.length - 1] * 10) / 10) // far-end T every 5 s, for the graph
+    const trial = { n: trials.length + 1, ...setup, reachTime: result.reachTime, changed, prediction, score, series }
     const newTrials = [...trials, trial]
     const problem = findProblem(newTrials, state.hypothesis.vars)
     setState((s) => ({ ...s, trials: newTrials, hint: { trial: trial.n, level: 0 } }))
@@ -121,94 +130,113 @@ export function Lab({ state, update, log, go, setState }) {
   const stopwatch = `${String(Math.floor(shownT / 60)).padStart(2, '0')}:${String(shownT % 60).padStart(2, '0')}`
   const canRun = !running && (!predict.on || predict.never || predict.seconds !== '')
 
+  const gradient = `linear-gradient(to right, ${profile.map((T, i) => `${tempColor(T)} ${((i / (profile.length - 1)) * 100).toFixed(1)}%`).join(', ')})`
+  const probeAt = Math.min(probe, setup.length)
+  const pos = (cm) => `calc(36px + (100% - 48px) * ${cm / 50})` // x position of a point on the rod (drawn to scale: 50 cm = full width)
+
   return (
     <div>
-      <h2>🔥 Level 3: The Rod Lab</h2>
-      <p style={{ fontSize: 14 }}>Your hypothesis: <b>{state.hypothesis.vars.map((v) => VAR_NAME[v]).join(', ') || 'none'}</b> matter. "{state.hypothesis.prediction}"
-        {' '}<button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button></p>
+      <div className="label">Phase 3 · Investigation</div>
+      <h1>The rod lab</h1>
+      <p className="lede">Change one variable, run, and compare the rows.</p>
+      <p className="hyp">Hypothesis: <b>{state.hypothesis.vars.map((v) => VAR_NAME[v]).join(', ') || 'none'}</b> matter{state.hypothesis.prediction && <> · “{state.hypothesis.prediction}”</>}
+        <button className="secondary small" onClick={() => go('hypothesis')}>Revise hypothesis</button></p>
 
-      <div className="card">
-        <p style={{ marginTop: 0 }}>Let's test your idea. <b>First</b>, set up the rod. <b>Second</b>, press Run. <b>Third</b>, compare rows in the table. Change <span className="key">one variable at a time</span>!</p>
-        <div className="row">
-          <label>Material <select value={setup.material} onChange={(e) => setVar('material', e.target.value)}>
-            {Object.entries(MATERIALS).map(([id, m]) => <option key={id} value={id}>{m.name} (k = {m.k})</option>)}
-          </select></label>
-          <label>Cross-section <select value={setup.area} onChange={(e) => setVar('area', e.target.value)}>
-            {Object.entries(AREAS).map(([id, a]) => <option key={id} value={id}>{a.name}</option>)}
-          </select></label>
-        </div>
-        <div className="row">
-          <label>Length: {setup.length} cm <input type="range" min="10" max="50" step="10" value={setup.length} onChange={(e) => setVar('length', Number(e.target.value))} /></label>
-          <label>Source: {setup.sourceT} °C <input type="range" min="60" max="150" step="10" value={setup.sourceT} onChange={(e) => setVar('sourceT', Number(e.target.value))} /></label>
-        </div>
-
-        {(trials.length >= 1 || state.track === 'olympiad') && (
-          <div className="card" style={{ borderColor: '#7c3aed' }}>
-            <label><input type="checkbox" checked={predict.on} onChange={(e) => setPredict({ ...predict, on: e.target.checked })} /> 🏅 Olympiad mode: <b>predict before you run</b> (scored on accuracy)</label>
-            {predict.on && (
-              <div className="row">
-                <input type="number" min="1" placeholder="seconds" value={predict.seconds} disabled={predict.never}
-                  onChange={(e) => setPredict({ ...predict, seconds: e.target.value })} style={{ width: 100 }} />
-                <label><input type="checkbox" checked={predict.never} onChange={(e) => setPredict({ ...predict, never: e.target.checked })} /> won't reach in 5 min</label>
-              </div>
-            )}
+      <div className="lab-grid">
+        <section className="stage" aria-label="Rod apparatus">
+          <div className="rod-wrap">
+            <div className="flame" title={`Heat source ${setup.sourceT} °C`}><Flame width={26} height={26} /><span className="mono">{setup.sourceT}°</span></div>
+            <div className="rod" style={{ width: `calc((100% - 48px) * ${setup.length / 50})`, height: { thin: 10, medium: 18, thick: 28 }[setup.area], background: gradient }} />
+            {BEADS.map((f) => {
+              const T = profile[Math.round(f * (profile.length - 1))]
+              return <div key={f} className={'bead' + (T >= MELT ? ' fallen' : '')} style={{ left: `calc(${pos(setup.length * f)} - 6px)` }} />
+            })}
+            <div className="probe-tag mono" style={{ left: pos(probeAt) }}>{probeT.toFixed(1)} °C</div>
           </div>
-        )}
-        <button disabled={!canRun} onClick={runTrial}>{running ? 'Running…' : '▶ Run trial'}</button>
+          {/* RULER: a tick every 5 cm, lined up with the rod */}
+          <div className="ruler mono">
+            {Array.from({ length: setup.length / 5 + 1 }, (_, k) => k * 5).map((cm) => (
+              <span key={cm} className={cm % 10 === 0 ? 'major' : ''} style={{ left: pos(cm) }}>{cm % 10 === 0 ? cm : ''}</span>
+            ))}
+          </div>
+          {/* THERMOMETER PROBE: drag along the rod to read the temperature at that point */}
+          <div className="probe-ctl" style={{ width: `calc((100% - 48px) * ${setup.length / 50} + 12px)` }}>
+            <input type="range" min="0" max={setup.length} step="1" value={probeAt} aria-label="Thermometer probe position (cm)" onChange={(e) => setProbe(Number(e.target.value))} />
+          </div>
+          <div className="readouts">
+            <div className="readout"><span className="label"><Thermo /> Probe</span><span className="reading mono">{probeAt} cm · {probeT.toFixed(1)} °C</span></div>
+            <div className="readout"><span className="label"><Clock /> Stopwatch</span><span className="reading mono">{stopwatch}</span>
+              <span className="small-note">{reached ? 'Far bead dropped' : run ? 'Watching the far bead' : 'Starts on Run'}</span></div>
+            <div className="readout"><span className="label">Far end</span><span className="reading mono">{profile[profile.length - 1].toFixed(1)} °C</span></div>
+          </div>
+        </section>
+
+        <aside className="panel" aria-label="Controls">
+          <div className="ctl">
+            <div className="label">Material · k in W/m·K</div>
+            <div className="swatches">
+              {Object.entries(MATERIALS).map(([id, m]) => (
+                <button key={id} className={'swatch ' + id + (setup.material === id ? ' on' : '')} aria-pressed={setup.material === id} onClick={() => setVar('material', id)}>
+                  <span className="chip" /><span>{m.name}</span><span className="mono">{m.k}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="ctl">
+            <div className="label">Cross-section</div>
+            <div className="seg">
+              {Object.entries(AREAS).map(([id, a]) => (
+                <button key={id} className={setup.area === id ? 'on' : ''} aria-pressed={setup.area === id} onClick={() => setVar('area', id)}>{a.name}</button>
+              ))}
+            </div>
+          </div>
+          <Slider label="Length" unit="cm" min={10} max={50} step={10} value={setup.length} onChange={(v) => setVar('length', v)} />
+          <Slider label="Source temperature" unit="°C" min={60} max={150} step={10} value={setup.sourceT} onChange={(v) => setVar('sourceT', v)} />
+
+          {(trials.length >= 1 || state.track === 'olympiad') && (
+            <div className="ctl predict">
+              <label><input type="checkbox" checked={predict.on} onChange={(e) => setPredict({ ...predict, on: e.target.checked })} /> Predict before you run (scored)</label>
+              {predict.on && (
+                <div className="row">
+                  <input type="number" min="1" placeholder="seconds" value={predict.seconds} disabled={predict.never}
+                    onChange={(e) => setPredict({ ...predict, seconds: e.target.value })} style={{ width: 96 }} />
+                  <label><input type="checkbox" checked={predict.never} onChange={(e) => setPredict({ ...predict, never: e.target.checked })} /> won't reach</label>
+                </div>
+              )}
+            </div>
+          )}
+          <button className="run" disabled={!canRun} onClick={runTrial}>{running ? 'Running…' : 'Run trial'}</button>
+        </aside>
       </div>
 
-      <div className="rod-wrap">
-        <div className="flame">🔥</div>
-        <div className="rod" style={{ width: rodWidth, height: { thin: 10, medium: 18, thick: 28 }[setup.area] }}>
-          {profile.map((T, i) => <div key={i} style={{ flex: 1, background: tempColor(T) }} />)}
-        </div>
-        <div style={{ position: 'absolute', top: 0, fontSize: 18, left: `calc(30px + (100% - 40px) * ${Math.min(probe, setup.length) / 50} - 9px)` }}>🌡</div>
-        {BEADS.map((f) => {
-          const T = profile[Math.round(f * (profile.length - 1))]
-          return <div key={f} className={'bead' + (T >= MELT ? ' fallen' : '')} style={{ left: `calc(30px + (100% - 40px) * ${(setup.length / 50) * f} - 6px)` }} />
-        })}
-      </div>
-      {/* RULER: a tick every 5 cm, lined up with the rod */}
-      <div style={{ position: 'relative', height: 22, fontSize: 11, color: '#94a3b8' }}>
-        {Array.from({ length: setup.length / 5 + 1 }, (_, k) => k * 5).map((cm) => (
-          <span key={cm} style={{ position: 'absolute', left: `calc(30px + (100% - 40px) * ${cm / 50})`, borderLeft: '1px solid #94a3b8', paddingLeft: 2, height: cm % 10 === 0 ? 14 : 7 }}>{cm % 10 === 0 ? cm : ''}</span>
-        ))}
-      </div>
-
-      <div className="row" style={{ alignItems: 'stretch' }}>
-        {/* THERMOMETER PROBE: drag the slider along the rod to read the temperature at that point */}
-        <div className="tool">
-          <div>🌡 <b>Thermometer probe</b>: drag along the rod</div>
-          <input type="range" min="0" max={setup.length} step="1" value={Math.min(probe, setup.length)} onChange={(e) => setProbe(Number(e.target.value))} style={{ width: '100%' }} />
-          <div className="reading">{Math.min(probe, setup.length)} cm → {probeT.toFixed(1)} °C</div>
-        </div>
-        {/* STOPWATCH: simulated time; it freezes when the far end reaches 60 °C */}
-        <div className="tool">
-          <div>⏱ <b>Stopwatch</b> (simulated time)</div>
-          <div className="reading">{stopwatch}</div>
-          <div style={{ fontSize: 12 }}>{reached ? '🟡 Far bead fell!' : run ? 'Watching the far bead…' : 'Starts when you run'}</div>
-        </div>
-      </div>
-
-      <svg viewBox="0 0 300 150" style={{ width: '100%', maxWidth: 480, background: '#1e293b', borderRadius: 8 }}>
-        <text x="4" y="12" fill="#94a3b8" fontSize="9">Far-end temperature (°C) vs time (s)</text>
-        <line x1="30" y1="130" x2="290" y2="130" stroke="#64748b" />
-        <line x1="30" y1="10" x2="30" y2="130" stroke="#64748b" />
-        <line x1="30" x2="290" y1={gy(MELT)} y2={gy(MELT)} stroke="#facc15" strokeDasharray="4 3" />
-        <text x="2" y={gy(MELT) + 3} fill="#facc15" fontSize="8">60°</text>
-        <text x="2" y="133" fill="#94a3b8" fontSize="8">{ROOM}°</text>
-        <text x="270" y="142" fill="#94a3b8" fontSize="8">300 s</text>
-        <polyline fill="none" stroke="#f97316" strokeWidth="2"
-          points={shown.map((s) => `${gx(s.t)},${gy(s.profile[s.profile.length - 1])}`).join(' ')} />
-      </svg>
+      <section className="notebook">
+        <div className="label">Notebook · far-end temperature vs time</div>
+        <svg viewBox="0 0 320 170" className="graph" role="img" aria-label="Far-end temperature against time for each trial">
+          {[0, 60, 120, 180, 240, 300].map((s) => <g key={s}><line x1={gx(s)} x2={gx(s)} y1="10" y2="130" className="gridline" /><text x={gx(s)} y="142" className="tick" textAnchor="middle">{s}</text></g>)}
+          {[ROOM, MELT, yMax].map((T) => <text key={T} x="26" y={gy(T) + 3} className="tick" textAnchor="end">{T}</text>)}
+          <line x1="30" y1="130" x2="290" y2="130" className="axis" />
+          <line x1="30" y1="10" x2="30" y2="130" className="axis" />
+          <line x1="30" x2="290" y1={gy(MELT)} y2={gy(MELT)} className="melt" />
+          <text x="288" y={gy(MELT) - 3} className="tick" textAnchor="end">wax melts 60 °C</text>
+          <text x="160" y="158" className="tick" textAnchor="middle">time (s)</text>
+          <text x="6" y="8" className="tick">°C</text>
+          {trials.slice(-4).map((tr) => tr.series && (
+            <polyline key={tr.n} fill="none" className="past" points={tr.series.map((T, i) => `${gx(i * 5)},${gy(Math.min(T, yMax))}`).join(' ')} />
+          ))}
+          {trials.slice(-4).map((tr) => tr.series && (
+            <text key={'l' + tr.n} className="tick" x={gx((tr.series.length - 1) * 5) + 3} y={gy(Math.min(tr.series[tr.series.length - 1], yMax)) + 3}>T{tr.n}</text>
+          ))}
+          <polyline fill="none" className="live" points={shown.map((s) => `${gx(s.t)},${gy(Math.min(s.profile[s.profile.length - 1], yMax))}`).join(' ')} />
+        </svg>
+      </section>
 
       {problem && !running && (
-        <div className="card" style={{ borderColor: '#facc15' }}>
-          <b className="warn">⚠ {problem.title}</b>
+        <div className="note">
+          <b>{problem.title}</b>
           <p style={{ fontSize: 14 }}>No result? That's still data! What is this run telling us?</p>
           {problem.hints.slice(0, hintLevel).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
           <div className="row">
-            {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1}/3)</button>}
+            {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1} of 3)</button>}
             <button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button>
           </div>
         </div>
@@ -228,7 +256,7 @@ export function Lab({ state, update, log, go, setState }) {
         </div>
       )}
       {rushing && (
-        <div className="card" style={{ borderColor: '#7c3aed' }}>
+        <div className="note">
           <Why>You ran 3 trials in under a minute with no hints. Too easy? Let's raise the stakes.</Why>
           <p>Challenge: <b>predict</b> the next result within 20% to earn the Oracle badge.</p>
           <button onClick={raiseChallenge}>Accept challenge</button>
@@ -253,7 +281,7 @@ export function Lab({ state, update, log, go, setState }) {
       </div>
       {trials.length >= 2 && <Conclusion state={state} update={update} log={log} />}
       <p>
-        <button disabled={trials.length < THRESHOLDS.minTrialsForChallenge} onClick={() => go('challenge')}>Level 4: Olympiad Challenge →</button>
+        <button disabled={trials.length < THRESHOLDS.minTrialsForChallenge} onClick={() => go('challenge')}>Next phase: Conclusion →</button>
         {trials.length < THRESHOLDS.minTrialsForChallenge && <span style={{ fontSize: 14 }}> (run at least 3 trials)</span>}
       </p>
     </div>
@@ -280,6 +308,21 @@ function Conclusion({ state, update, log }) {
       <textarea rows="2" value={c.text} onChange={(e) => update({ conclusion: { ...c, text: e.target.value } })} />
       <button disabled={busy || c.text.trim().length < 10} onClick={check}>{busy ? 'Checking…' : 'Check my conclusion'}</button>
       {c.result && <p className={c.result.correct ? 'good' : c.result.flag ? 'bad' : 'warn'}><SourceBadge result={c.result} />{c.result.fb}</p>}
+    </div>
+  )
+}
+
+// An instrument-style slider: label, value in mono with unit, tick marks, and min/max labels.
+function Slider({ label, unit, min, max, step, value, onChange }) {
+  const id = 'ticks-' + label.replace(/\W/g, '')
+  const ticks = []
+  for (let v = min; v <= max; v += step) ticks.push(v)
+  return (
+    <div className="ctl">
+      <div className="ctl-head"><span className="label">{label}</span><span className="mono val">{value} {unit}</span></div>
+      <input type="range" min={min} max={max} step={step} value={value} list={id} aria-label={label} onChange={(e) => onChange(Number(e.target.value))} />
+      <datalist id={id}>{ticks.map((v) => <option key={v} value={v} />)}</datalist>
+      <div className="scale mono"><span>{min}</span><span>{max} {unit}</span></div>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
-import { INTRO, VARIABLES } from './content.js'
+import { INTRO, VARIABLES, PHASES } from './content.js'
 export { VARIABLES }
 
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
@@ -30,7 +30,8 @@ export function Hook({ state, update, log, go }) {
 
   return (
     <div>
-      <h2>🧩 Level 1: The Spoon Puzzle</h2>
+      <div className="label">Phase 1 · Orientation</div>
+      <h1>The spoon puzzle</h1>
       <div className="card">
         <p>Let's start with a puzzle. A metal spoon and a wooden spoon have both been on the table <b>all night</b>. Which one is <span className="key">colder</span>?</p>
         <label>How confident are you? {confidence}/5
@@ -49,7 +50,7 @@ export function Hook({ state, update, log, go }) {
       {answer !== null && state.track === 'olympiad' && (
         <>
           <Why>You got 3/3 on the warm-up, so you're on the <b>Olympiad track</b>. We skip the basics: number puzzles and predict mode are unlocked from your first trial.</Why>
-          <button onClick={() => go('hypothesis')}>Level 2: Make a hypothesis →</button>
+          <button onClick={() => go('hypothesis')}>Next phase: Conceptualisation →</button>
         </>
       )}
 
@@ -60,7 +61,7 @@ export function Hook({ state, update, log, go }) {
           <div className="card">{INTRO[introStep]}</div>
           {introStep < INTRO.length - 1
             ? <button onClick={() => setHook({ introStep: introStep + 1 })}>Next</button>
-            : <button onClick={() => go('hypothesis')}>Level 2: Make a hypothesis →</button>}
+            : <button onClick={() => go('hypothesis')}>Next phase: Conceptualisation →</button>}
         </>
       )}
     </div>
@@ -74,19 +75,17 @@ export function Welcome({ state, go, setState }) {
 
   return (
     <div>
-      <h1>Challenge Mode: Heat Conduction Lab</h1>
+      <div className="label">Challenge mode · ET 617</div>
+      <h1>What controls how fast heat travels?</h1>
       <p>This is not a drill. Five levels, 10 minutes, and puzzles a textbook list can't solve. Ready?</p>
       <div className="card">
-        <div>🧩 Level 1: The Spoon Puzzle</div>
-        <div>🧪 Level 2: Your Hypothesis</div>
-        <div>🔥 Level 3: The Rod Lab (find what controls the speed of heat)</div>
-        <div>🏆 Level 4: Olympiad Challenge</div>
-        <div>⭐ Level 5: Debrief and badges</div>
+        <div className="label">Your 10-minute inquiry</div>
+        <ol className="phases-list">{PHASES.map((p) => <li key={p.id}><b>{p.name}</b> <span className="mono">{p.minutes} min</span></li>)}</ol>
       </div>
-      <p>Earn badges like <span className="badge">Controlled Experimenter</span><span className="badge">Oracle</span><span className="badge">Olympian</span></p>
+      <p>Earn badges like <span className="badge">Controlled Experimenter</span> <span className="badge">Oracle</span> <span className="badge">Olympian</span></p>
       {hasProgress ? (
         <div className="row">
-          <button onClick={() => go(resumeTo)}>▶ Continue where you left off ({STEP_NAMES[resumeTo]}, {state.trials.length} trials)</button>
+          <button onClick={() => go(resumeTo)}>Continue where you left off ({STEP_NAMES[resumeTo]}, {state.trials.length} trials)</button>
           <button className="secondary" onClick={start}>Start fresh</button>
         </div>
       ) : (
@@ -155,7 +154,8 @@ export function Hypothesis({ state, update, log, go }) {
 
   return (
     <div>
-      <h2>🧪 Level 2: {h.saved ? 'Revise your hypothesis' : 'Your hypothesis'}</h2>
+      <div className="label">Phase 2 · Conceptualisation</div>
+      <h1>{h.saved ? 'Revise your hypothesis' : 'Your hypothesis'}</h1>
       <div className="card">
         <p>A rod is heated at one end. Wax beads stuck along it melt and drop when the rod reaches 60 °C there.
           <b> What controls how fast heat reaches the far end?</b> Tick every variable you think matters. Be bold, because we'll test it.</p>
@@ -168,7 +168,7 @@ export function Hypothesis({ state, update, log, go }) {
         </label>
       </div>
       <button disabled={h.vars.length === 0 || !h.prediction.trim()} onClick={save}>
-        {h.saved ? 'Save revision and return to lab' : 'Level 3: Enter the lab →'}
+        {h.saved ? 'Save revision and return to lab' : 'Next phase: Investigation →'}
       </button>
     </div>
   )
@@ -202,7 +202,8 @@ export function Summary({ state, update, log, go }) {
 
   return (
     <div>
-      <h2>⭐ Level 5: Debrief</h2>
+      <div className="label">Phase 5 · Discussion</div>
+      <h1>Debrief</h1>
       <div className="card">
         <h3>Your fair tests</h3>
         {pairs.length === 0 && <p className="warn">No fair-test pairs yet. Go back to the lab and change one variable at a time.</p>}
@@ -220,7 +221,7 @@ export function Summary({ state, update, log, go }) {
       <div className="card">
         <h3>Badges</h3>
         {badges.map(([earned, name, why]) => (
-          <div key={name} style={{ opacity: earned ? 1 : 0.35 }}><span className="badge">{earned ? '🏅' : '🔒'} {name}</span> {why}</div>
+          <div key={name} style={{ opacity: earned ? 1 : 0.35 }}><span className="badge">{earned ? 'Earned' : 'Locked'} · {name}</span> {why}</div>
         ))}
       </div>
       <p className="good">Session complete. Your progress is saved, so next time you can resume, or start fresh and beat your badges.</p>
