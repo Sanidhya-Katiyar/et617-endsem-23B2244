@@ -1,0 +1,33 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; }
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 16px; background: #1e293b; }
+nav button { background: none; color: #cbd5e1; border: 1px solid #334155; }
+footer { text-align: center; padding: 10px; background: #1e293b; color: #94a3b8; font-size: 14px; }
+h1, h2, h3 { margin: 8px 0; }
+button { background: #f97316; color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 15px; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.secondary { background: #334155; }
+.card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; margin: 10px 0; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+label { display: block; margin: 6px 0; }
+input[type=text], input[type=number], textarea, select { background: #0f172a; color: #e2e8f0; border: 1px solid #475569; border-radius: 6px; padding: 6px; font-size: 15px; }
+textarea { width: 100%; }
+.progress { display: flex; gap: 4px; padding: 6px 16px; background: #0b1222; align-items: center; font-size: 13px; }
+.step { flex: 1; height: 8px; border-radius: 4px; background: #334155; }
+.step.done { background: #22c55e; }
+.step.current { background: #f97316; }
+.good { color: #4ade80; }
+.bad { color: #f87171; }
+.warn { color: #facc15; }
+.hint { border-left: 4px solid #facc15; background: #2a2410; padding: 8px 10px; margin: 6px 0; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { border: 1px solid #334155; padding: 4px 6px; text-align: left; }
+tr.highlight td { background: #422006; outline: 2px solid #facc15; }
+.badge { display: inline-block; background: #7c3aed; padding: 4px 10px; border-radius: 999px; margin: 3px; font-size: 13px; }
+.rod-wrap { position: relative; height: 90px; margin: 10px 0; }
+.rod { display: flex; height: 26px; border-radius: 4px; overflow: hidden; border: 1px solid #64748b; position: absolute; left: 30px; top: 30px; }
+.flame { position: absolute; left: 0; top: 26px; font-size: 26px; }
+.bead { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #fef3c7; top: 18px; transition: top 0.8s, opacity 0.8s; }
+.bead.fallen { top: 76px; opacity: .4; }
