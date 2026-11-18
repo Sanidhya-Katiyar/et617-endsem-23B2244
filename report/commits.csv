@@ -1,0 +1,29 @@
+18:26|Add DESIGN.md and Vite React scaffold with identity footer
+18:29|Add app shell: autosave store, progress bar, Welcome/Resume, Learning log, About
+18:29|Add Hook puzzle screen with confidence rating and chunked concept intro
+18:29|Add Hypothesis screen with variable multi-select, prediction and revise support
+18:31|Add rod lab: finite-difference sim, wax beads, far-end graph, trials table, predict mode, unsuccessful-experiment hints
+18:32|Add Olympiad Challenge: MCQ, numeric, ranking, written rubric, M1/M2 feedback, Fourier extension
+18:33|Add Summary screen: fair-test findings, confidence before/after, badges
+18:34|Set page title and document files and event schema in README
+18:47|Add adaptivity: diagnostic tracks (profile), M1/M2 remediation + bonus (performance), worked comparison / raise challenge (interaction)
+18:48|Add Gemini AI feedback: api/feedback.js + api/prompt.js with checks, 5s timeout and offline fallback
+18:51|Use gemini-3.5-flash-lite (verified live) for AI feedback; fix SPA rewrite to keep /api
+18:53|Add misconception discovery: prediction vs actual result side by side, resolution after learner compares
+18:54|Add lab tools: draggable thermometer probe, stopwatch, ruler scale along the rod
+18:56|AI feedback: retry once within the 5s budget for reliability
+18:57|AI feedback: single 4.5s budget with fast retry on quick errors
+18:58|Tone pass: conversational, first/second/third cues, highlighted key terms
+18:58|Update DESIGN.md with adaptivity rules, AI feature and discovery design
+18:59|Add REPORT_NOTES.md with D1-D8 draft content
+19:04|Move all learner text, questions, feedback, rubrics, hints, thresholds and materials into src/content.js
+19:09|UI redesign: lab notebook style, remove emojis
+19:10|Mobile 360px: compact phase stepper
+19:11|Experiment design tool: choose variable to test, kept-constant lock tags, Run a fair test, fair pairs
+19:12|Pedaste inquiry cycle: 5-phase stepper with minute budget; Discussion phase with explain-to-a-junior AI feedback
+19:13|Expertise reversal: faded hints (Need a nudge?) for Olympiad track, hint 1 shown for Explorer
+19:13|Fix Explorer hint stepping
+19:14|Docs: research frameworks mapped to features, references, updated click paths
+19:18|WIP before UI critique
+19:20|UI polish round 1
+19:22|UI polish round 2
