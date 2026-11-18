@@ -5,7 +5,6 @@ const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypot
 
 // Placeholders for screens built in later commits.
 const Soon = () => <p>Coming next…</p>
-export const Hypothesis = Soon
 export const Lab = Soon
 export const Challenge = Soon
 export const Summary = Soon
@@ -123,6 +122,48 @@ export function About({ state, go }) {
         <p><b>Persona:</b> Aditi, 13, Class 8, NSEJS aspirant, Pune.</p>
       </div>
       <button onClick={() => go(state.lastStep || 'welcome')}>Back</button>
+    </div>
+  )
+}
+
+export const VARIABLES = [
+  ['material', 'Material of the rod'],
+  ['length', 'Length of the rod'],
+  ['area', 'Cross-section (thickness)'],
+  ['sourceT', 'Temperature of the heat source'],
+]
+
+// Hypothesis: which variables change the time for heat to reach the far end? Also used for "Revise hypothesis".
+export function Hypothesis({ state, update, log, go }) {
+  const h = state.hypothesis
+  const toggle = (v) => update({ hypothesis: { ...h, vars: h.vars.includes(v) ? h.vars.filter((x) => x !== v) : [...h.vars, v] } })
+
+  const save = () => {
+    const revising = h.saved
+    update({ hypothesis: { ...h, saved: true, revisions: h.revisions + (revising ? 1 : 0) } })
+    log(revising ? 'hypothesis_revised' : 'hypothesis', { vars: h.vars, prediction: h.prediction })
+    if (!h.vars.includes('length') || !h.vars.includes('area'))
+      log('misconception_flag', { id: 'M2', note: 'thinks length/thickness do not affect conduction time', vars: h.vars })
+    go('lab')
+  }
+
+  return (
+    <div>
+      <h2>🧪 Level 2: {h.saved ? 'Revise your hypothesis' : 'Your hypothesis'}</h2>
+      <div className="card">
+        <p>A rod is heated at one end. Wax beads stuck along it melt and drop when the rod reaches 60 °C there.
+          <b> Which variables change how long heat takes to reach the far end?</b> Tick all you think matter.</p>
+        {VARIABLES.map(([id, text]) => (
+          <label key={id}><input type="checkbox" checked={h.vars.includes(id)} onChange={() => toggle(id)} /> {text}</label>
+        ))}
+        <label>One-line prediction:
+          <input type="text" style={{ width: '100%' }} value={h.prediction} placeholder="e.g. Copper will be fastest; length won't matter"
+            onChange={(e) => update({ hypothesis: { ...h, prediction: e.target.value } })} />
+        </label>
+      </div>
+      <button disabled={h.vars.length === 0 || !h.prediction.trim()} onClick={save}>
+        {h.saved ? 'Save revision and return to lab' : 'Level 3: Enter the lab →'}
+      </button>
     </div>
   )
 }
