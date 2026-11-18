@@ -7,7 +7,7 @@ export async function getFeedback(kind, text, context, offlineCheck) {
   if (new URLSearchParams(location.search).get('ai') === 'off') return offline('AI switched off (?ai=off)')
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 5000)
+  const timer = setTimeout(() => controller.abort(), THRESHOLDS.aiTimeoutMs)
   try {
     const r = await fetch('/api/feedback', {
       method: 'POST',
@@ -24,7 +24,7 @@ export async function getFeedback(kind, text, context, offlineCheck) {
       fb: `${data.feedback} ${data.socratic_question}`,
     }
   } catch (e) {
-    return offline(e.name === 'AbortError' ? 'timeout (5 s)' : 'network error')
+    return offline(e.name === 'AbortError' ? `timeout (${THRESHOLDS.aiTimeoutMs / 1000} s)` : 'network error')
   } finally {
     clearTimeout(timer)
   }

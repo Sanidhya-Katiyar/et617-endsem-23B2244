@@ -12,6 +12,7 @@ export const THRESHOLDS = {
   rushSeconds: 60,            // ...within this many seconds, with no hints
   minTrialsForChallenge: 3,   // trials needed before the Conclusion phase unlocks
   timeDiffPercent: 15,        // two results "differ" if their times differ by more than this %
+  aiTimeoutMs: 10000,         // browser waits this long for AI feedback before using the offline rubric
 }
 
 // ---------- INQUIRY CYCLE (Pedaste et al., 2015): 5 phases with a minute budget that sums to 10 min (C4) ----------
@@ -22,6 +23,9 @@ export const PHASES = [
   { id: 'conclusion', kid: 'Challenge', name: 'Conclusion', screen: 'challenge', minutes: 2 },
   { id: 'discussion', kid: 'Explain', name: 'Discussion', screen: 'summary', minutes: 1 },
 ]
+
+// Label on feedback buttons while the AI is working
+export const THINKING_LABEL = 'Thinking…'
 
 // ---------- PHYSICS + MATERIALS ----------
 // Welcome screen copy
