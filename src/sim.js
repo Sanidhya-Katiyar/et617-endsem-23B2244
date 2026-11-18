@@ -1,20 +1,13 @@
 // sim.js — 1D finite-difference model of heat conducting along a rod heated at the left end.
 // k = conductivity (W/mK), rho = density (kg/m³), c = specific heat (J/kgK). Diffusivity alpha = k/(rho·c).
-export const MATERIALS = {
-  copper: { name: 'Copper', k: 400, rho: 8960, c: 385 },
-  aluminium: { name: 'Aluminium', k: 237, rho: 2700, c: 900 },
-  steel: { name: 'Steel', k: 50, rho: 7850, c: 490 },
-  glass: { name: 'Glass', k: 1, rho: 2500, c: 840 },
-  wood: { name: 'Wood', k: 0.15, rho: 600, c: 1700 },
-}
-// Rod radius in metres for each cross-section option.
-export const AREAS = { thin: { name: 'Thin', r: 0.002 }, medium: { name: 'Medium', r: 0.005 }, thick: { name: 'Thick', r: 0.01 } }
+import { MATERIALS, AREAS, PHYSICS } from './content.js'
+export { MATERIALS, AREAS }
 
-export const ROOM = 25        // °C, the starting temperature of the rod and the air
-export const MELT = 60        // °C, the wax melts here
-export const MAX_TIME = 300   // seconds (5 min of simulated time)
+export const ROOM = PHYSICS.room
+export const MELT = PHYSICS.melt
+export const MAX_TIME = PHYSICS.maxTime
 const N = 30                  // number of points along the rod
-const H = 10                  // W/m²K, heat lost from the rod's surface to the air
+const H = PHYSICS.surfaceLoss  // W/m²K, heat lost from the rod's surface to the air
 
 export function simulate({ material, length, area, sourceT }) {
   const m = MATERIALS[material]

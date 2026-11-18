@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
 import { Why } from './Adapt.jsx'
+import { HINTS, THRESHOLDS, checkConclusion } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
 const DEFAULT_SETUP = { material: 'copper', length: 20, area: 'medium', sourceT: 100 }
@@ -14,7 +15,7 @@ const fmtTime = (s) => (s === null ? 'did not reach in 5 min' : `${Math.floor(s 
 const tempColor = (T) => `hsl(${Math.max(0, 240 * (1 - (T - ROOM) / 125))}, 85%, 50%)`
 const changedVars = (a, b) => VARIABLES.map(([id]) => id).filter((v) => a[v] !== b[v])
 const differs = (a, b) => (a.reachTime === null) !== (b.reachTime === null) ||
-  (a.reachTime !== null && Math.abs(a.reachTime - b.reachTime) > 0.15 * Math.min(a.reachTime, b.reachTime))
+  (a.reachTime !== null && Math.abs(a.reachTime - b.reachTime) > (THRESHOLDS.timeDiffPercent / 100) * Math.min(a.reachTime, b.reachTime))
 
 // Looks at the trials and returns the problem with the latest one (or null). It never gives the answer.
 export function findProblem(trials, hypVars) {
@@ -25,11 +26,7 @@ export function findProblem(trials, hypVars) {
     const list = last.changed.map((v) => VAR_NAME[v]).join(', ')
     return {
       type: 'confounded', title: 'Confounded experiment: more than one variable changed', rows: [n - 2, n - 1],
-      hints: [
-        `Between trial ${n - 1} and trial ${n} you changed: ${list}. The result changed, but which change caused it? Can you tell?`,
-        'Choose ONE variable to test. Set the other three exactly as they were in your previous trial, then run again.',
-        'Compare the two highlighted rows. Count how many columns differ. How many should differ in a fair test?',
-      ],
+      hints: HINTS.confounded(n, list),
     }
   }
   if (last.reachTime === null) {
@@ -37,12 +34,7 @@ export function findProblem(trials, hypVars) {
     for (let i = n - 2; i >= 0; i--) if (trials[i].reachTime !== null) { ref = i; break }
     return {
       type: 'no_result', title: 'No result: the far end never reached 60 °C', rows: ref >= 0 ? [ref, n - 1] : [n - 1],
-      hints: [
-        "The wax at the far end didn't melt in 5 minutes. Is that a failed experiment, or is it data? What does it tell you about this setup?",
-        'Keep three settings the same and change just one that you think could help heat arrive sooner. Then compare the two results.',
-        ref >= 0 ? 'Compare the highlighted rows. Which setting is different, and how did the result change?'
-          : 'Look at the far-end graph: is the temperature still rising at 5 min, or has it levelled off below 60 °C? What does each case suggest?',
-      ],
+      hints: HINTS.noResult(n, ref >= 0),
     }
   }
   // (c) results contradict the hypothesis: a variable she said doesn't matter clearly changed the time
@@ -53,25 +45,12 @@ export function findProblem(trials, hypVars) {
       if (ch.length === 1 && ch[0] === v && differs(trials[i], trials[j])) {
         return {
           type: 'contradicts_hypothesis', title: 'Your results and your hypothesis disagree', rows: [i, j],
-          hints: [
-            `Your hypothesis says the ${VAR_NAME[v]} does not matter. Do all of your results agree with that?`,
-            `Find two trials where ONLY the ${VAR_NAME[v]} was different and everything else was held constant. Those make a fair test.`,
-            'Compare the highlighted rows. What does the difference in results say about your hypothesis? You can revise it any time.',
-          ],
+          hints: HINTS.contradicts(VAR_NAME[v]),
         }
       }
     }
   }
   return null
-}
-
-// Offline keyword checker for the lab conclusion (used when the AI is unavailable). It never states the answer.
-function checkConclusion(text) {
-  const t = text.toLowerCase()
-  const length = /length|long|short/.test(t), area = /thick|thin|area|cross|width/.test(t), material = /material|copper|metal|wood|steel|glass|alumin/.test(t)
-  if (length && area && material) return { correct: true, fb: 'You named three variables. Which row in your table is the fair test that proves each one?' }
-  if (!length && !area) return { flag: 'M2', fb: 'Your conclusion talks only about the material. Did any of your fair tests change something else? What happened then?' }
-  return { fb: "Good start. Is there a variable you haven't tested on its own yet? What would a fair test of it look like?" }
 }
 
 export function Lab({ state, update, log, go, setState }) {
@@ -119,8 +98,8 @@ export function Lab({ state, update, log, go, setState }) {
   // INTERACTION adaptivity: struggling (2+ hints, or 3+ min in the lab) → offer a worked comparison;
   // rushing (3+ trials in under 60 s with no hints) → raise the challenge.
   const labSecs = Math.round((Date.now() - state.stepStart) / 1000)
-  const struggling = hintLevel >= 2 || labSecs > 180
-  const rushing = trials.length >= 3 && labSecs < 60 && state.hintsUsed === 0 && !predict.on
+  const struggling = hintLevel >= THRESHOLDS.hintsForWorkedExample || labSecs > THRESHOLDS.struggleSeconds
+  const rushing = trials.length >= THRESHOLDS.rushTrials && labSecs < THRESHOLDS.rushSeconds && state.hintsUsed === 0 && !predict.on
   const [showWorked, setShowWorked] = useState(false)
   const openWorked = () => { setShowWorked(true); log('adaptation', { rule: 'interaction_worked_comparison', hintLevel, labSecs }) }
   const raiseChallenge = () => { setPredict({ ...predict, on: true }); log('adaptation', { rule: 'interaction_raise_challenge', trials: trials.length, labSecs }) }
@@ -274,8 +253,8 @@ export function Lab({ state, update, log, go, setState }) {
       </div>
       {trials.length >= 2 && <Conclusion state={state} update={update} log={log} />}
       <p>
-        <button disabled={trials.length < 3} onClick={() => go('challenge')}>Level 4: Olympiad Challenge →</button>
-        {trials.length < 3 && <span style={{ fontSize: 14 }}> (run at least 3 trials)</span>}
+        <button disabled={trials.length < THRESHOLDS.minTrialsForChallenge} onClick={() => go('challenge')}>Level 4: Olympiad Challenge →</button>
+        {trials.length < THRESHOLDS.minTrialsForChallenge && <span style={{ fontSize: 14 }}> (run at least 3 trials)</span>}
       </p>
     </div>
   )

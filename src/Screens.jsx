@@ -2,6 +2,8 @@
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
 import { Diagnostic, Why } from './Adapt.jsx'
+import { INTRO, VARIABLES } from './content.js'
+export { VARIABLES }
 
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
 
@@ -10,13 +12,6 @@ const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypot
 
 
 
-
-// Concept intro, in small chunks shown one at a time (cognitive load). No formula yet.
-const INTRO = [
-  '1/3 · Heat always flows from hotter to colder, until both are at the same temperature. After a night on the table, both spoons have reached room temperature.',
-  '2/3 · Materials pass heat along at very different rates. A metal passes energy from particle to particle quickly; wood passes it slowly. This "conduction rate" is what you will investigate.',
-  '3/3 · Your skin does not sense temperature. It senses how fast heat leaves your hand. Something that pulls heat away fast feels cold. Can the shape of an object change how fast heat moves too? Find out in the lab.',
-]
 
 export function Hook({ state, update, log, go }) {
   const { answer, confidence, introStep } = state.hook
@@ -143,12 +138,6 @@ export function About({ state, go }) {
   )
 }
 
-export const VARIABLES = [
-  ['material', 'Material of the rod'],
-  ['length', 'Length of the rod'],
-  ['area', 'Cross-section (thickness)'],
-  ['sourceT', 'Temperature of the heat source'],
-]
 
 // Hypothesis: which variables change the time for heat to reach the far end? Also used for "Revise hypothesis".
 export function Hypothesis({ state, update, log, go }) {
