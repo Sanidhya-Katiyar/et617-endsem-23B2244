@@ -1,13 +1,14 @@
 // Screens.jsx — the smaller screens: Welcome/Resume, Hook, Hypothesis, Summary, Learning log, About.
 import { freshState, logToCsv, downloadFile } from './store.js'
+import { MATERIALS, AREAS } from './sim.js'
 
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
 
 // Placeholders for screens built in later commits.
-const Soon = () => <p>Coming next…</p>
 
 
-export const Summary = Soon
+
+
 
 // Concept intro, in small chunks shown one at a time (cognitive load). No formula yet.
 const INTRO = [
@@ -164,6 +165,61 @@ export function Hypothesis({ state, update, log, go }) {
       <button disabled={h.vars.length === 0 || !h.prediction.trim()} onClick={save}>
         {h.saved ? 'Save revision and return to lab' : 'Level 3: Enter the lab →'}
       </button>
+    </div>
+  )
+}
+
+// Summary: findings from controlled trial pairs, confidence before/after, and badges.
+export function Summary({ state, update, log, go }) {
+  const { trials, challenge: ch, hook } = state
+  const ids = VARIABLES.map(([id]) => id)
+  const label = (t) => `${MATERIALS[t.material].name}, ${t.length} cm, ${AREAS[t.area].name}, ${t.sourceT} °C`
+  const time = (t) => (t.reachTime === null ? 'never (5 min)' : t.reachTime + ' s')
+
+  // fair tests: pairs of trials that differ in exactly one variable
+  const pairs = []
+  for (let i = 0; i < trials.length; i++) for (let j = i + 1; j < trials.length; j++) {
+    const diff = ids.filter((v) => trials[i][v] !== trials[j][v])
+    if (diff.length === 1) pairs.push({ a: trials[i], b: trials[j], v: diff[0] })
+  }
+  const revisedAfterHint = state.hintsUsed > 0 && state.hypothesis.revisions > 0
+  const badges = [
+    [ch.q1?.correct || ch.q6?.correct, 'Spoon Solver', 'cracked the spoon puzzle'],
+    [pairs.length > 0, 'Controlled Experimenter', 'ran a fair test (one variable changed)'],
+    [trials.some((t) => t.score >= 80), 'Oracle', 'predicted a trial within 20%'],
+    [revisedAfterHint, 'Persistent Scientist', 'learned from an unsuccessful experiment and revised'],
+    [ch.x1?.correct && ch.x2?.correct, 'Olympian', "mastered Fourier's law"],
+  ]
+  const finish = () => {
+    log('session_complete', { confidenceBefore: hook.confidence, confidenceAfter: state.confAfter, badges: badges.filter((b) => b[0]).map((b) => b[1]) })
+    go('welcome')
+  }
+
+  return (
+    <div>
+      <h2>⭐ Level 5: Debrief</h2>
+      <div className="card">
+        <h3>Your fair tests</h3>
+        {pairs.length === 0 && <p className="warn">No fair-test pairs yet. Go back to the lab and change one variable at a time.</p>}
+        <ul>{pairs.slice(0, 6).map((p, i) => (
+          <li key={i}>Changing only <b>{VARIABLES.find(([id]) => id === p.v)[1].toLowerCase()}</b>: {label(p.a)} → {time(p.a)}; {label(p.b)} → {time(p.b)}</li>
+        ))}</ul>
+        <p>Challenge score: {['q1', 'q2', 'q3', 'q4', 'q5', 'q6'].filter((q) => ch[q]?.correct).length}/6 · Hints used: {state.hintsUsed} · Hypothesis revisions: {state.hypothesis.revisions}</p>
+      </div>
+      <div className="card">
+        <p>Confidence on the spoon puzzle at the start: <b>{hook.confidence}/5</b> (you answered "{hook.answer}")</p>
+        <label>How confident are you now that you could explain heat conduction to a friend? {state.confAfter}/5
+          <input type="range" min="1" max="5" value={state.confAfter} onChange={(e) => update({ confAfter: Number(e.target.value) })} />
+        </label>
+      </div>
+      <div className="card">
+        <h3>Badges</h3>
+        {badges.map(([earned, name, why]) => (
+          <div key={name} style={{ opacity: earned ? 1 : 0.35 }}><span className="badge">{earned ? '🏅' : '🔒'} {name}</span> {why}</div>
+        ))}
+      </div>
+      <p className="good">Session complete. Your progress is saved, so next time you can resume, or start fresh and beat your badges.</p>
+      <button onClick={finish}>Finish session</button>
     </div>
   )
 }
