@@ -256,9 +256,7 @@ Additional indicators: time per phase (`step_time`, total ≤600 s for C4), conf
 
 = AI-use log and reflection
 
-*Chats, in the order used:*
-+ \[PASTE CLAUDE CHAT LINK\]: planning, card choice, prompt writing, research on frameworks.
-+ \[PASTE CLAUDE CODE SESSION LINK\]: implementation, deployment, UI critique, this report (Claude Code with Claude Opus).
+*AI chat log.* All AI assistance came from one Claude Code session (Anthropic, Claude Opus). It covered pre-exam environment setup, planning and card interpretation, prompt writing, research on the frameworks, implementation, deployment, the UI critique and this report. The complete session is submitted as a separate file, `ET617_23B2244_AI_chat_log.txt`. It holds every user message, every assistant reply and every tool call, in chronological order (tool outputs omitted).
 
 *What we delegated.* Scaffolding, component code, the simulation, the serverless function, deployment commands, screenshot automation and the first drafts of documentation were produced with an AI coding assistant from our written specifications.
 
