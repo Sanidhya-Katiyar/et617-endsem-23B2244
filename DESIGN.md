@@ -61,3 +61,30 @@ Welcome/Resume → Hook → Hypothesis → Lab ⇄ (Revise hypothesis) → Chall
 - **Quantitative tasks:** the L² scaling question and Fourier's law.
 - **Predict-before-you-run mode:** unlocked after the first trial, it scores how accurate her predictions are.
 - **No answer reveals:** she gets puzzles and hints instead.
+
+## Adaptivity rules (src/Adapt.jsx, src/Challenge.jsx, src/Lab.jsx)
+Every adaptation shows a "🤖 Why am I seeing this?" note and logs an `adaptation` event.
+
+| Signal | Rule | What changes |
+|---|---|---|
+| **Profile** | 3-question diagnostic after the hook. 3/3 → **Olympiad track**; otherwise → **Explorer track** | Olympiad: skips the intro cards, predict mode is open from trial 1, the Fourier extension is visible straight away. Explorer: 3 chunked intro cards first. |
+| **Performance** | An answer flagged M1 or M2 | Remediation card plus a similar retry question (shown once per misconception) |
+| **Performance** | 2 correct in a row | Harder Olympiad bonus question (30 cm rod → ×9 time) |
+| **Interaction** | 2 or more hints on one problem, OR more than 3 min in the lab | Offers a worked fair-test comparison (source temperature, which doesn't reveal length/area) |
+| **Interaction** | 3 or more trials in under 60 s with no hints | "Raise the stakes": turns on predict mode with an Oracle target |
+
+## AI feature (api/feedback.js + api/prompt.js)
+- **What:** Gemini (`gemini-3.5-flash-lite`, REST `generateContent`, no SDK) evaluates the two written answers: the spoon explanation (Q6) and the lab conclusion.
+- **Key:** read only from `process.env.GEMINI_API_KEY` on the server; never sent to the browser.
+- **Prompt:** `api/prompt.js` gives the persona, the 3 outcomes, the M1/M2 definitions, "never reveal the answer, ask ONE Socratic question", and asks for JSON only.
+- **Output:** `{verdict: correct|M1|M2|partial, feedback, socratic_question}`.
+- **Check before showing:** the JSON shape is valid, the verdict is allowed, the reply is ≤ 60 words, and during the lab it is rejected if it reveals the answer (regex for "length matters", "×4", "squared"…).
+- **Fallback:** on an error, a 5 s timeout or a failed check, the keyword rubric checker runs instead, labelled "Offline feedback (AI unavailable)". `?ai=off` forces the fallback for demos.
+- AI output carries an "✨ AI feedback" badge.
+
+## Misconception discovery
+At the start of the Challenge there's a table: *You predicted* vs *What actually happened*.
+- Spoon answer vs thermometer readings.
+- Length and thickness hypothesis vs her own fair-test results.
+
+Mismatching rows are highlighted. The resolution appears only after she clicks "What do we notice?".
