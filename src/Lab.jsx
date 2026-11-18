@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
 import { Why } from './Adapt.jsx'
+import { getFeedback, SourceBadge } from './ai.jsx'
 
 const DEFAULT_SETUP = { material: 'copper', length: 20, area: 'medium', sourceT: 100 }
 const VAR_NAME = Object.fromEntries(VARIABLES.map(([id, text]) => [id, text.toLowerCase()]))
@@ -62,6 +63,15 @@ export function findProblem(trials, hypVars) {
     }
   }
   return null
+}
+
+// Offline keyword checker for the lab conclusion (used when the AI is unavailable). It never states the answer.
+function checkConclusion(text) {
+  const t = text.toLowerCase()
+  const length = /length|long|short/.test(t), area = /thick|thin|area|cross|width/.test(t), material = /material|copper|metal|wood|steel|glass|alumin/.test(t)
+  if (length && area && material) return { correct: true, fb: 'You named three variables. Which row in your table is the fair test that proves each one?' }
+  if (!length && !area) return { flag: 'M2', fb: 'Your conclusion talks only about the material. Did any of your fair tests change something else? What happened then?' }
+  return { fb: "Good start. Is there a variable you haven't tested on its own yet? What would a fair test of it look like?" }
 }
 
 export function Lab({ state, update, log, go, setState }) {
@@ -218,6 +228,7 @@ export function Lab({ state, update, log, go, setState }) {
       )}
 
       <h3>Results</h3>
+      {/* conclusion box is rendered below the table */}
       <div style={{ overflowX: 'auto' }}>
         <table>
           <thead><tr><th>#</th><th>Material</th><th>Length</th><th>Section</th><th>Source</th><th>Time for far end to reach 60 °C</th><th>Prediction</th></tr></thead>
@@ -232,10 +243,35 @@ export function Lab({ state, update, log, go, setState }) {
           </tbody>
         </table>
       </div>
+      {trials.length >= 2 && <Conclusion state={state} update={update} log={log} />}
       <p>
         <button disabled={trials.length < 3} onClick={() => go('challenge')}>Level 4: Olympiad Challenge →</button>
         {trials.length < 3 && <span style={{ fontSize: 14 }}> (run at least 3 trials)</span>}
       </p>
+    </div>
+  )
+}
+
+// The learner writes a conclusion from the lab; AI (or the offline checker) replies with ONE Socratic question.
+function Conclusion({ state, update, log }) {
+  const c = state.conclusion || { text: '', result: null }
+  const [busy, setBusy] = useState(false)
+  const check = async () => {
+    setBusy(true)
+    const trials = state.trials.map((t) => `${t.material} ${t.length}cm ${t.area} ${t.sourceT}C -> ${t.reachTime ?? 'never'}`).join('; ')
+    const result = await getFeedback('lab', c.text, { hypothesis: state.hypothesis.vars, trials }, checkConclusion)
+    setBusy(false)
+    update({ conclusion: { ...c, result } })
+    log('conclusion', { text: c.text, source: result.source, correct: !!result.correct, flag: result.flag, reason: result.reason })
+    if (result.flag) log('misconception_flag', { id: result.flag, where: 'lab conclusion' })
+  }
+  return (
+    <div className="card">
+      <b>What do we notice? Write your conclusion.</b>
+      <p style={{ fontSize: 14 }}>Which variables change the time? Use your table as evidence.</p>
+      <textarea rows="2" value={c.text} onChange={(e) => update({ conclusion: { ...c, text: e.target.value } })} />
+      <button disabled={busy || c.text.trim().length < 10} onClick={check}>{busy ? 'Checking…' : 'Check my conclusion'}</button>
+      {c.result && <p className={c.result.correct ? 'good' : c.result.flag ? 'bad' : 'warn'}><SourceBadge result={c.result} />{c.result.fb}</p>}
     </div>
   )
 }

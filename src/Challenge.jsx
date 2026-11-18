@@ -2,6 +2,7 @@
 // with feedback written for the correct answer and for misconceptions M1 and M2, then an Olympiad extension.
 import { useState } from 'react'
 import { REMEDIATION, BONUS, Why } from './Adapt.jsx'
+import { getFeedback, SourceBadge } from './ai.jsx'
 
 const QUESTIONS = [
   {
@@ -90,6 +91,13 @@ function checkWritten(text) {
 
 function Question({ q, answer, onAnswer }) {
   const [value, setValue] = useState(q.type === 'rank' ? q.start : '')
+  const [busy, setBusy] = useState(false)
+  const submitWritten = async () => {
+    setBusy(true)
+    const result = await getFeedback('spoon', value, {}, checkWritten)
+    setBusy(false)
+    onAnswer(q, value, result)
+  }
   const done = answer !== undefined
 
   const move = (i, d) => {
@@ -136,13 +144,13 @@ function Question({ q, answer, onAnswer }) {
       {q.type === 'written' && (
         <div>
           <textarea rows="3" value={done ? answer.value : value} disabled={done} onChange={(e) => setValue(e.target.value)} />
-          <button disabled={done || value.trim().length < 10} onClick={() => onAnswer(q, value, checkWritten(value))}>Submit explanation</button>
+          <button disabled={busy || done || value.trim().length < 10} onClick={submitWritten}>{busy ? 'Checking…' : 'Submit explanation'}</button>
         </div>
       )}
       {done && (
         <>
           <p className={answer.correct ? 'good' : answer.flag ? 'bad' : 'warn'}>
-            {answer.correct ? '✓ ' : answer.flag ? `✗ (${answer.flag}) ` : '△ '}{answer.fb}
+            <SourceBadge result={answer} />{answer.correct ? '✓ ' : answer.flag ? `✗ (${answer.flag}) ` : '△ '}{answer.fb}
           </p>
           <p style={{ fontSize: 14 }}><b>Model answer:</b> {q.model}</p>
         </>
