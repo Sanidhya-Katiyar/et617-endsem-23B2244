@@ -159,6 +159,52 @@ function Question({ q, answer, onAnswer }) {
   )
 }
 
+// MISCONCEPTION DISCOVERY: her prediction next to the actual result, so she spots the mismatch herself FIRST.
+// The resolution only appears after she clicks "What do we notice?".
+function Discovery({ state, update, log }) {
+  const { trials, hook, hypothesis } = state
+  const names = { length: 'Length', area: 'Thickness' }
+  const said = { metal: 'The metal spoon is colder', wood: 'The wooden spoon is colder', same: 'Both are the same temperature' }
+  const evidence = (v) => {
+    for (let i = 0; i < trials.length; i++) for (let j = i + 1; j < trials.length; j++) {
+      const diff = ['material', 'length', 'area', 'sourceT'].filter((k) => trials[i][k] !== trials[j][k])
+      if (diff.length === 1 && diff[0] === v) {
+        const t = (x) => (x.reachTime === null ? 'never' : x.reachTime + ' s')
+        return `${trials[i][v]} → ${t(trials[i])}, ${trials[j][v]} → ${t(trials[j])}`
+      }
+    }
+    return null
+  }
+  const m1 = hook.answer === 'metal'
+  const m2vars = ['length', 'area'].filter((v) => !hypothesis.vars.includes(v))
+  const reveal = () => { update({ discovered: true }); log('discovery', { m1, m2vars }) }
+
+  return (
+    <div className="card" style={{ borderColor: '#60a5fa' }}>
+      <h3>🔍 Your prediction vs what happened</h3>
+      <table>
+        <thead><tr><th></th><th>You predicted</th><th>What actually happened</th></tr></thead>
+        <tbody>
+          <tr className={m1 ? 'highlight' : ''}><td>Spoons</td><td>{said[hook.answer] || '-'}</td><td>Thermometer: metal <b>25 °C</b>, wood <b>25 °C</b></td></tr>
+          {['length', 'area'].map((v) => (
+            <tr key={v} className={m2vars.includes(v) && evidence(v) ? 'highlight' : ''}>
+              <td>{names[v]}</td><td>{hypothesis.vars.includes(v) ? 'Matters' : "Doesn't matter"}</td>
+              <td>{evidence(v) ? <>Your fair test: <b>{evidence(v)}</b></> : <i>No fair test yet. Try one in the lab!</i>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!state.discovered ? <p><b>Compare the two columns.</b> Do they match? <button onClick={reveal}>What do we notice?</button></p> : (
+        <div>
+          {m1 && <p className="remedy"><span className="key">Spoons:</span> you predicted the metal is colder, but the thermometer reads the same. The metal only <b>feels</b> colder because it pulls heat from your hand faster.</p>}
+          {m2vars.map((v) => evidence(v) && <p key={v} className="remedy"><span className="key">{names[v]}:</span> you said it doesn't matter, but your own fair test changed the time. Shape matters, not just material.</p>)}
+          {!m1 && m2vars.every((v) => !evidence(v)) && <p className="good">Your predictions match your evidence. Nice work, scientist!</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Challenge({ state, update, log, go }) {
   const answers = state.challenge
   const streak = state.streak || 0
@@ -195,6 +241,7 @@ export function Challenge({ state, update, log, go }) {
     <div>
       <h2>🏆 Level 4: Olympiad Challenge</h2>
       <p>Use your lab results. Score: {score}/{QUESTIONS.length}. Want to check something? <button className="secondary" onClick={() => go('lab')}>Back to lab</button></p>
+      <Discovery state={state} update={update} log={log} />
       {QUESTIONS.map((q) => (
         <div key={q.id}>
           <Question q={q} answer={answers[q.id]} onAnswer={onAnswer} />
