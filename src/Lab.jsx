@@ -265,9 +265,13 @@ export function Lab({ state, update, log, go, setState }) {
         <div className="note">
           <b>{problem.title}</b>
           <p>{PROBLEM_LEAD[problem.type]}</p>
-          {problem.hints.slice(0, hintLevel).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
+          {/* EXPERTISE REVERSAL (Kalyuga): Explorer sees hint 1 straight away; Olympiad hints are faded (hidden until asked) */}
+          <Why>{state.track === 'olympiad'
+            ? 'You are on the Olympiad track, so hints stay hidden until you ask. Experts learn more with less guidance.'
+            : 'You are on the Explorer track, so the first hint is shown straight away.'}</Why>
+          {problem.hints.slice(0, Math.max(hintLevel, state.track === 'olympiad' ? 0 : 1)).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
           <div className="row">
-            {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1} of 3)</button>}
+            {hintLevel < 3 && <button className="secondary" onClick={showHint}>{state.track === 'olympiad' ? (hintLevel === 0 ? 'Need a nudge?' : `Another nudge (${hintLevel + 1} of 3)`) : `Next hint (${Math.max(hintLevel, 1) + 1} of 3)`}</button>}
             {problem.type === 'confounded' && <button onClick={makeFair}>Run a fair test</button>}
             <button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button>
           </div>
