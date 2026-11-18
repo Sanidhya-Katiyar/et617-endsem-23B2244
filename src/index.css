@@ -150,6 +150,11 @@ tr.highlight td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .tool { flex: 1; min-width: 200px; border: 1px solid var(--rule); padding: 8px 10px; }
 
 @media (max-width: 760px) {
+  .stepper { overflow: hidden; }
+  .phase { min-width: 0; flex: 0 0 auto; padding-right: 12px; font-size: 12px; }
+  .phase:not(.current) .pname, .phase .min { display: none; }
+  .clock { margin-left: auto; font-size: 12px; }
+  .top nav button { padding: 4px 6px; }
   .lab-grid { grid-template-columns: 1fr; }
   .readouts { grid-template-columns: 1fr 1fr; }
   h1 { font-size: 22px; }
