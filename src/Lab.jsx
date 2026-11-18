@@ -133,6 +133,13 @@ export function Lab({ state, update, log, go, setState }) {
   const gx = (t) => 30 + (t / MAX_TIME) * 260
   const gy = (T) => 130 - ((T - ROOM) / (yMax - ROOM)) * 120
   const running = run && run.frame < run.samples.length - 1
+  const [probe, setProbe] = useState(10)
+  const probeT = profile[Math.round((Math.min(probe, setup.length) / setup.length) * (profile.length - 1))]
+  const t = run ? run.samples[run.frame].t : 0
+  const reachedAt = run ? run.samples.findIndex((x) => x.profile[x.profile.length - 1] >= MELT) : -1
+  const reached = reachedAt >= 0 && run.frame >= reachedAt
+  const shownT = reached ? run.samples[reachedAt].t : t
+  const stopwatch = `${String(Math.floor(shownT / 60)).padStart(2, '0')}:${String(shownT % 60).padStart(2, '0')}`
   const canRun = !running && (!predict.on || predict.never || predict.seconds !== '')
 
   return (
@@ -175,12 +182,33 @@ export function Lab({ state, update, log, go, setState }) {
         <div className="rod" style={{ width: rodWidth, height: { thin: 10, medium: 18, thick: 28 }[setup.area] }}>
           {profile.map((T, i) => <div key={i} style={{ flex: 1, background: tempColor(T) }} />)}
         </div>
+        <div style={{ position: 'absolute', top: 0, fontSize: 18, left: `calc(30px + (100% - 40px) * ${Math.min(probe, setup.length) / 50} - 9px)` }}>🌡</div>
         {BEADS.map((f) => {
           const T = profile[Math.round(f * (profile.length - 1))]
           return <div key={f} className={'bead' + (T >= MELT ? ' fallen' : '')} style={{ left: `calc(30px + (100% - 40px) * ${(setup.length / 50) * f} - 6px)` }} />
         })}
       </div>
-      {run && <p style={{ fontSize: 14 }}>t = {run.samples[run.frame].t} s · far end = {profile[profile.length - 1].toFixed(1)} °C</p>}
+      {/* RULER: a tick every 5 cm, lined up with the rod */}
+      <div style={{ position: 'relative', height: 22, fontSize: 11, color: '#94a3b8' }}>
+        {Array.from({ length: setup.length / 5 + 1 }, (_, k) => k * 5).map((cm) => (
+          <span key={cm} style={{ position: 'absolute', left: `calc(30px + (100% - 40px) * ${cm / 50})`, borderLeft: '1px solid #94a3b8', paddingLeft: 2, height: cm % 10 === 0 ? 14 : 7 }}>{cm % 10 === 0 ? cm : ''}</span>
+        ))}
+      </div>
+
+      <div className="row" style={{ alignItems: 'stretch' }}>
+        {/* THERMOMETER PROBE: drag the slider along the rod to read the temperature at that point */}
+        <div className="tool">
+          <div>🌡 <b>Thermometer probe</b>: drag along the rod</div>
+          <input type="range" min="0" max={setup.length} step="1" value={Math.min(probe, setup.length)} onChange={(e) => setProbe(Number(e.target.value))} style={{ width: '100%' }} />
+          <div className="reading">{Math.min(probe, setup.length)} cm → {probeT.toFixed(1)} °C</div>
+        </div>
+        {/* STOPWATCH: simulated time; it freezes when the far end reaches 60 °C */}
+        <div className="tool">
+          <div>⏱ <b>Stopwatch</b> (simulated time)</div>
+          <div className="reading">{stopwatch}</div>
+          <div style={{ fontSize: 12 }}>{reached ? '🟡 Far bead fell!' : run ? 'Watching the far bead…' : 'Starts when you run'}</div>
+        </div>
+      </div>
 
       <svg viewBox="0 0 300 150" style={{ width: '100%', maxWidth: 480, background: '#1e293b', borderRadius: 8 }}>
         <text x="4" y="12" fill="#94a3b8" fontSize="9">Far-end temperature (°C) vs time (s)</text>
