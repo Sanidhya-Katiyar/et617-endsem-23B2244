@@ -5,11 +5,13 @@ import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
 import { Why } from './Adapt.jsx'
 import { Flame, Thermo, Clock } from './Icons.jsx'
-import { HINTS, THRESHOLDS, checkConclusion } from './content.js'
+import { HINTS, THRESHOLDS, checkConclusion, PROBLEM_LEAD } from './content.js'
 import { getFeedback, SourceBadge } from './ai.jsx'
 
 const DEFAULT_SETUP = { material: 'copper', length: 20, area: 'medium', sourceT: 100 }
 const VAR_NAME = Object.fromEntries(VARIABLES.map(([id, text]) => [id, text.toLowerCase()]))
+const SHORT = { material: 'Material', length: 'Length', area: 'Section', sourceT: 'Source' }
+const fmtVal = (v, t) => (v === 'material' ? MATERIALS[t.material].name : v === 'area' ? AREAS[t.area].name : v === 'length' ? `${t.length} cm` : `${t.sourceT} °C`)
 const BEADS = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1]
 
 const fmtTime = (s) => (s === null ? 'did not reach in 5 min' : `${Math.floor(s / 60)}m ${s % 60}s`)
@@ -75,6 +77,27 @@ export function Lab({ state, update, log, go, setState }) {
   }, [run])
 
   const setVar = (key, value) => update({ labSetup: { ...setup, [key]: value } })
+
+  // EXPERIMENT DESIGN TOOL (van Riesen et al., 2018): choose ONE variable to test; the others are tagged "kept constant".
+  const testing = state.testing || 'length'
+  const prevTrial = trials[trials.length - 1]
+  const locked = (v) => trials.length > 0 && v !== testing
+  const lockTag = (v) => locked(v) && <span className={'lock' + (prevTrial && prevTrial[v] !== setup[v] ? ' changed' : '')}>{prevTrial && prevTrial[v] !== setup[v] ? 'changed' : 'kept constant'}</span>
+  const chooseTesting = (v) => { update({ testing: v }); log('testing_variable', { variable: v }) }
+  // "Run a fair test": put every variable except the tested one back to the previous trial's value
+  const makeFair = () => {
+    const base = trials.length >= 2 ? trials[trials.length - 2] : trials[0]
+    const fair = { ...setup }
+    VARIABLES.forEach(([v]) => { if (v !== testing) fair[v] = base[v] })
+    update({ labSetup: fair })
+    log('fair_test_reset', { testing, setup: fair })
+  }
+  // fair pairs: trials that differ in exactly ONE variable, grouped by that variable
+  const fairPairs = []
+  for (let i = 0; i < trials.length; i++) for (let j = i + 1; j < trials.length; j++) {
+    const ch = changedVars(trials[i], trials[j])
+    if (ch.length === 1) fairPairs.push({ v: ch[0], a: trials[i], b: trials[j] })
+  }
 
   const runTrial = () => {
     const result = simulate(setup)
@@ -173,7 +196,15 @@ export function Lab({ state, update, log, go, setState }) {
 
         <aside className="panel" aria-label="Controls">
           <div className="ctl">
-            <div className="label">Material · k in W/m·K</div>
+            <div className="label">What am I testing?</div>
+            <div className="seg seg-4">
+              {VARIABLES.map(([v]) => (
+                <button key={v} className={testing === v ? 'on' : ''} aria-pressed={testing === v} onClick={() => chooseTesting(v)}>{SHORT[v]}</button>
+              ))}
+            </div>
+          </div>
+          <div className="ctl">
+            <div className="ctl-head"><span className="label">Material · k in W/m·K</span>{lockTag('material')}</div>
             <div className="swatches">
               {Object.entries(MATERIALS).map(([id, m]) => (
                 <button key={id} className={'swatch ' + id + (setup.material === id ? ' on' : '')} aria-pressed={setup.material === id} onClick={() => setVar('material', id)}>
@@ -183,15 +214,15 @@ export function Lab({ state, update, log, go, setState }) {
             </div>
           </div>
           <div className="ctl">
-            <div className="label">Cross-section</div>
+            <div className="ctl-head"><span className="label">Cross-section</span>{lockTag('area')}</div>
             <div className="seg">
               {Object.entries(AREAS).map(([id, a]) => (
                 <button key={id} className={setup.area === id ? 'on' : ''} aria-pressed={setup.area === id} onClick={() => setVar('area', id)}>{a.name}</button>
               ))}
             </div>
           </div>
-          <Slider label="Length" unit="cm" min={10} max={50} step={10} value={setup.length} onChange={(v) => setVar('length', v)} />
-          <Slider label="Source temperature" unit="°C" min={60} max={150} step={10} value={setup.sourceT} onChange={(v) => setVar('sourceT', v)} />
+          <Slider label="Length" unit="cm" min={10} max={50} step={10} value={setup.length} onChange={(v) => setVar('length', v)} tag={lockTag('length')} />
+          <Slider label="Source temperature" unit="°C" min={60} max={150} step={10} value={setup.sourceT} onChange={(v) => setVar('sourceT', v)} tag={lockTag('sourceT')} />
 
           {(trials.length >= 1 || state.track === 'olympiad') && (
             <div className="ctl predict">
@@ -233,10 +264,11 @@ export function Lab({ state, update, log, go, setState }) {
       {problem && !running && (
         <div className="note">
           <b>{problem.title}</b>
-          <p style={{ fontSize: 14 }}>No result? That's still data! What is this run telling us?</p>
+          <p>{PROBLEM_LEAD[problem.type]}</p>
           {problem.hints.slice(0, hintLevel).map((h, i) => <div key={i} className="hint">Hint {i + 1}: {h}</div>)}
           <div className="row">
             {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1} of 3)</button>}
+            {problem.type === 'confounded' && <button onClick={makeFair}>Run a fair test</button>}
             <button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button>
           </div>
         </div>
@@ -279,6 +311,21 @@ export function Lab({ state, update, log, go, setState }) {
           </tbody>
         </table>
       </div>
+      {fairPairs.length > 0 && (
+        <div className="fair">
+          <div className="label">Fair pairs · only one variable changed</div>
+          {VARIABLES.map(([v, text]) => {
+            const ps = fairPairs.filter((p) => p.v === v)
+            if (!ps.length) return null
+            return (
+              <div key={v} className="fair-group">
+                <b>{text}</b>
+                {ps.map((p, k) => <div key={k} className="mono">T{p.a.n} {fmtVal(v, p.a)} → {fmtTime(p.a.reachTime)}   vs   T{p.b.n} {fmtVal(v, p.b)} → {fmtTime(p.b.reachTime)}</div>)}
+              </div>
+            )
+          })}
+        </div>
+      )}
       {trials.length >= 2 && <Conclusion state={state} update={update} log={log} />}
       <p>
         <button disabled={trials.length < THRESHOLDS.minTrialsForChallenge} onClick={() => go('challenge')}>Next phase: Conclusion →</button>
@@ -313,13 +360,13 @@ function Conclusion({ state, update, log }) {
 }
 
 // An instrument-style slider: label, value in mono with unit, tick marks, and min/max labels.
-function Slider({ label, unit, min, max, step, value, onChange }) {
+function Slider({ label, unit, min, max, step, value, onChange, tag }) {
   const id = 'ticks-' + label.replace(/\W/g, '')
   const ticks = []
   for (let v = min; v <= max; v += step) ticks.push(v)
   return (
     <div className="ctl">
-      <div className="ctl-head"><span className="label">{label}</span><span className="mono val">{value} {unit}</span></div>
+      <div className="ctl-head"><span className="label">{label} {tag}</span><span className="mono val">{value} {unit}</span></div>
       <input type="range" min={min} max={max} step={step} value={value} list={id} aria-label={label} onChange={(e) => onChange(Number(e.target.value))} />
       <datalist id={id}>{ticks.map((v) => <option key={v} value={v} />)}</datalist>
       <div className="scale mono"><span>{min}</span><span>{max} {unit}</span></div>

@@ -192,6 +192,13 @@ export function checkConclusion(text) {
   return { fb: "Good start. Is there a variable you haven't tested on its own yet? What would a fair test of it look like?" }
 }
 
+// ---------- LAB: first line of the note after an unsuccessful experiment ----------
+export const PROBLEM_LEAD = {
+  confounded: 'Two things changed. Can we tell which one caused the difference?',
+  no_result: "No result? That's still data. What is this run telling us?",
+  contradicts_hypothesis: 'Do your results agree with your hypothesis?',
+}
+
 // ---------- LAB: hint ladders for unsuccessful experiments (never state the rule) ----------
 export const HINTS = {
   confounded: (n, list) => [

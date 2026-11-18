@@ -147,6 +147,12 @@ tr.highlight td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .graph .tick { font-size: 7.5px; fill: var(--ink-2); }
 .graph .past { stroke: var(--ink-2); stroke-width: 0.8; stroke-dasharray: 3 2; }
 .graph .live { stroke: var(--hot); stroke-width: 1.6; }
+.lock { font-family: var(--mono); font-size: 10px; text-transform: none; letter-spacing: 0; border: 1px solid var(--rule); color: var(--ink-2); padding: 0 4px; border-radius: 2px; font-weight: 400; }
+.lock.changed { border-color: var(--accent); color: var(--accent); }
+.seg-4 button { font-size: 12.5px; }
+.fair { margin: 16px 0; border: 1px solid var(--rule); background: var(--panel); padding: 12px 16px; }
+.fair-group { margin-top: 8px; font-size: 14px; }
+.fair-group .mono { font-size: 12.5px; white-space: pre-wrap; }
 .tool { flex: 1; min-width: 200px; border: 1px solid var(--rule); padding: 8px 10px; }
 
 @media (max-width: 760px) {
