@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { simulate, MATERIALS, AREAS, MELT, ROOM, MAX_TIME } from './sim.js'
 import { VARIABLES } from './Screens.jsx'
+import { Why } from './Adapt.jsx'
 
 const DEFAULT_SETUP = { material: 'copper', length: 20, area: 'medium', sourceT: 100 }
 const VAR_NAME = Object.fromEntries(VARIABLES.map(([id, text]) => [id, text.toLowerCase()]))
@@ -105,6 +106,15 @@ export function Lab({ state, update, log, go, setState }) {
   }
   const highlighted = problem && hintLevel >= 3 ? problem.rows : []
 
+  // INTERACTION adaptivity: struggling (2+ hints, or 3+ min in the lab) → offer a worked comparison;
+  // rushing (3+ trials in under 60 s with no hints) → raise the challenge.
+  const labSecs = Math.round((Date.now() - state.stepStart) / 1000)
+  const struggling = hintLevel >= 2 || labSecs > 180
+  const rushing = trials.length >= 3 && labSecs < 60 && state.hintsUsed === 0 && !predict.on
+  const [showWorked, setShowWorked] = useState(false)
+  const openWorked = () => { setShowWorked(true); log('adaptation', { rule: 'interaction_worked_comparison', hintLevel, labSecs }) }
+  const raiseChallenge = () => { setPredict({ ...predict, on: true }); log('adaptation', { rule: 'interaction_raise_challenge', trials: trials.length, labSecs }) }
+
   // what to draw on the rod: the current animation frame, or a cold rod
   const profile = run ? run.samples[run.frame].profile : Array(30).fill(ROOM)
   const shown = run ? run.samples.slice(0, run.frame + 1) : []
@@ -135,7 +145,7 @@ export function Lab({ state, update, log, go, setState }) {
           <label>Source: {setup.sourceT} °C <input type="range" min="60" max="150" step="10" value={setup.sourceT} onChange={(e) => setVar('sourceT', Number(e.target.value))} /></label>
         </div>
 
-        {trials.length >= 1 && (
+        {(trials.length >= 1 || state.track === 'olympiad') && (
           <div className="card" style={{ borderColor: '#7c3aed' }}>
             <label><input type="checkbox" checked={predict.on} onChange={(e) => setPredict({ ...predict, on: e.target.checked })} /> 🏅 Olympiad mode: <b>predict before you run</b> (scored on accuracy)</label>
             {predict.on && (
@@ -183,6 +193,27 @@ export function Lab({ state, update, log, go, setState }) {
             {hintLevel < 3 && <button className="secondary" onClick={showHint}>Need a hint ({hintLevel + 1}/3)</button>}
             <button className="secondary" onClick={() => go('hypothesis')}>Revise hypothesis</button>
           </div>
+        </div>
+      )}
+
+      {struggling && !running && (
+        <div className="card">
+          <Why>{hintLevel >= 2 ? 'You used 2 hints' : "You've spent over 3 minutes here"}, so here's a worked example of a <b>fair test</b> to copy.</Why>
+          {!showWorked ? <button className="secondary" onClick={openWorked}>Show me a worked comparison</button> : (
+            <div>
+              <p>Let's look at a fair test of <b>source temperature</b>:</p>
+              <p>First, copper · 20 cm · medium · <span className="key">100 °C</span> → 133 s<br />
+                Second, copper · 20 cm · medium · <span className="key">150 °C</span> → 83 s</p>
+              <p>Third, notice that <b>only one thing changed</b>, so it must have caused the difference. Now do the same for the variable <i>you</i> want to test.</p>
+            </div>
+          )}
+        </div>
+      )}
+      {rushing && (
+        <div className="card" style={{ borderColor: '#7c3aed' }}>
+          <Why>You ran 3 trials in under a minute with no hints. Too easy? Let's raise the stakes.</Why>
+          <p>Challenge: <b>predict</b> the next result within 20% to earn the Oracle badge.</p>
+          <button onClick={raiseChallenge}>Accept challenge</button>
         </div>
       )}
 

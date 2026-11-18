@@ -1,6 +1,7 @@
 // Challenge.jsx — Level 4: interpret results. Six questions in four formats (MCQ, numeric, ranking, written)
 // with feedback written for the correct answer and for misconceptions M1 and M2, then an Olympiad extension.
 import { useState } from 'react'
+import { REMEDIATION, BONUS, Why } from './Adapt.jsx'
 
 const QUESTIONS = [
   {
@@ -152,20 +153,53 @@ function Question({ q, answer, onAnswer }) {
 
 export function Challenge({ state, update, log, go }) {
   const answers = state.challenge
+  const streak = state.streak || 0
   const onAnswer = (q, value, result) => {
-    update({ challenge: { ...answers, [q.id]: { value, ...result } } })
-    log('answer', { question: q.id, value, correct: !!result.correct })
-    if (result.flag) log('misconception_flag', { id: result.flag, question: q.id })
+    const newStreak = result.correct ? streak + 1 : 0
+    update({ challenge: { ...answers, [q.id]: { value, ...result } }, streak: newStreak, bonus: state.bonus || newStreak >= 2 })
+    log('answer', { question: q.id, value, correct: !!result.correct, source: result.source })
+    if (result.flag) {
+      log('misconception_flag', { id: result.flag, question: q.id })
+      log('adaptation', { rule: 'performance_remediation', misconception: result.flag })
+    }
+    if (newStreak >= 2 && !state.bonus) log('adaptation', { rule: 'performance_harder', streak: newStreak })
   }
   const allDone = QUESTIONS.every((q) => answers[q.id])
   const score = QUESTIONS.filter((q) => answers[q.id]?.correct).length
+
+  // after each question: remediation card + retry if it showed M1/M2 (only the first time for each misconception)
+  const firstFlagged = {}
+  QUESTIONS.forEach((q) => { const f = answers[q.id]?.flag; if (f && !firstFlagged[f]) firstFlagged[f] = q.id })
+  const afterQuestion = (q) => {
+    const flag = answers[q.id]?.flag
+    if (!flag || firstFlagged[flag] !== q.id) return null
+    const r = REMEDIATION[flag]
+    return (
+      <div className="remedy">
+        <Why>Your answer showed misconception <b>{flag}</b>, so here's a short fix and a similar question to try.</Why>
+        <p>{r.card}</p>
+        <Question q={r.retry} answer={answers[r.retry.id]} onAnswer={onAnswer} />
+      </div>
+    )
+  }
 
   return (
     <div>
       <h2>🏆 Level 4: Olympiad Challenge</h2>
       <p>Use your lab results. Score: {score}/{QUESTIONS.length}. Want to check something? <button className="secondary" onClick={() => go('lab')}>Back to lab</button></p>
-      {QUESTIONS.map((q) => <Question key={q.id} q={q} answer={answers[q.id]} onAnswer={onAnswer} />)}
-      {allDone && (
+      {QUESTIONS.map((q) => (
+        <div key={q.id}>
+          <Question q={q} answer={answers[q.id]} onAnswer={onAnswer} />
+          {afterQuestion(q)}
+        </div>
+      ))}
+      {state.bonus && (
+        <div className="remedy">
+          <Why>You got 2 right in a row, so here's a harder Olympiad question.</Why>
+          <Question q={BONUS} answer={answers.bonus} onAnswer={onAnswer} />
+        </div>
+      )}
+      {(allDone || state.track === 'olympiad') && (
         <>
           <h3>⚡ Olympiad extension: Fourier's law (for fast finishers)</h3>
           {EXTENSION.map((q) => <Question key={q.id} q={q} answer={answers[q.id]} onAnswer={onAnswer} />)}

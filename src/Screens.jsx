@@ -1,6 +1,7 @@
 // Screens.jsx — the smaller screens: Welcome/Resume, Hook, Hypothesis, Summary, Learning log, About.
 import { freshState, logToCsv, downloadFile } from './store.js'
 import { MATERIALS, AREAS } from './sim.js'
+import { Diagnostic, Why } from './Adapt.jsx'
 
 const STEP_NAMES = { welcome: 'Welcome', hook: 'Hook puzzle', hypothesis: 'Hypothesis', lab: 'Lab', challenge: 'Challenge', summary: 'Summary' }
 
@@ -26,6 +27,11 @@ export function Hook({ state, update, log, go }) {
     log('hook_answer', { answer: choice, confidence })
     if (choice === 'metal') log('misconception_flag', { id: 'M1', note: 'thinks metal at room temp is colder' })
   }
+  const chooseTrack = (track, score, answers) => {
+    update({ track, diagScore: score })
+    log('diagnostic', { score, answers })
+    log('adaptation', { rule: 'profile', track })
+  }
 
   return (
     <div>
@@ -43,9 +49,19 @@ export function Hook({ state, update, log, go }) {
         </div>
       </div>
 
-      {answer !== null && (
+      {answer !== null && !state.track && <Diagnostic onDone={chooseTrack} />}
+
+      {answer !== null && state.track === 'olympiad' && (
         <>
-          <p>Answer locked in. Don't worry about whether you're right yet: you'll test it in the lab and revisit it in the challenge.</p>
+          <Why>You got 3/3 on the warm-up, so you're on the <b>Olympiad track</b>. We skip the basics: number puzzles and predict mode are unlocked from your first trial.</Why>
+          <button onClick={() => go('hypothesis')}>Level 2: Make a hypothesis →</button>
+        </>
+      )}
+
+      {answer !== null && state.track === 'explorer' && (
+        <>
+          <Why>You scored {state.diagScore}/3 on the warm-up, so you're on the <b>Explorer track</b>. Three quick idea cards first, then the lab.</Why>
+          <p>Answer locked in. We'll test it in the lab.</p>
           <div className="card">{INTRO[introStep]}</div>
           {introStep < INTRO.length - 1
             ? <button onClick={() => setHook({ introStep: introStep + 1 })}>Next</button>
