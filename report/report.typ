@@ -119,7 +119,7 @@ All text below is copied from `src/content.js`. Formats: multiple choice (MCQ), 
 
 After any M1 or M2 answer the learner receives a remediation card and a *similar retry item*: for M1, "An iron railing and a wooden bench sit outside all night at 15 °C. What does a thermometer read?" (both 15 °C); for M2, "Two copper rods, 10 cm and 30 cm. Which far end melts its wax first?" (10 cm).
 
-= D4. Working application
+= D4. Working application (URL, screen map)
 
 *URL:* https://et617-23b2244.vercel.app (Vercel production; the identity token "ET 617 · 23B2244" is in the footer of every screen, and an About screen gives the roll number and card).
 
@@ -145,7 +145,7 @@ The app has nine screens or states with learner inputs, system outputs and trans
 
 == C4 visibly implemented
 - A five-phase stepper with a minute budget (1.5 + 1.5 + 4 + 2 + 1 = 10 min) and a running clock "mm:ss / 10:00" (Figure 2).
-- Autosave after every action to `localStorage`; *Continue where you left off* restores the exact screen and the lab trials table (Figure 1).
+- Autosave after every action to `localStorage`; *Continue where you left off* restores the exact screen and the lab trials table (Figure 2).
 - The simulation is sped up (about 4 s per 5-minute trial); three trials unlock the Conclusion phase.
 
 #figure(grid(columns: (1.55fr, 1fr), column-gutter: 8pt, shot("01-welcome-1280.png"), shot("01-welcome-360.png")),
@@ -186,7 +186,7 @@ The physics is computed deterministically (a 30-node explicit finite-difference 
 - *What it does:* classifies a learner's written answer as `correct`, `M1`, `M2` or `partial`, gives one line of feedback and asks one Socratic question.
 - *Where:* (1) Q6 spoon explanation, (2) lab conclusion ("What do we notice?"), (3) Discussion "Explain it to a junior".
 - *Input:* the learner's text (≤600 characters) plus, for the lab conclusion, her hypothesis variables and a one-line summary of each trial.
-- *Model call:* browser → our Vercel serverless function `api/feedback.js` → Google Gemini REST `v1beta/models/gemini-3.5-flash-lite:generateContent` (system instruction + user message, temperature 0.3, max 300 tokens, `responseMimeType: application/json`). Server budget 4.5 s (one fast retry on quick errors); browser timeout 5 s.
+- *Model call:* browser → our Vercel serverless function `api/feedback.js` → Google Gemini REST `v1beta/models/gemini-3.5-flash-lite:generateContent` (system instruction + user message, temperature 0.3, max 300 tokens, `responseMimeType: application/json`). Server budget 9 s (one fast retry on quick errors); browser timeout 10 s, during which the button shows "Thinking…".
 - *Output schema:* `{"verdict": "correct|M1|M2|partial", "feedback": "...", "socratic_question": "..."}`.
 - *Key:* `GEMINI_API_KEY` is stored only as a Vercel environment variable (Production, Development) and read via `process.env` on the server; it is never sent to the browser or committed.
 
@@ -199,7 +199,7 @@ The physics is computed deterministically (a 30-node explicit finite-difference 
 `checkReply()` in `api/feedback.js` rejects a reply unless: (1) it parses as JSON; (2) `verdict` is one of the four allowed values; (3) `feedback` and `socratic_question` are strings; (4) together they are at most 60 words; (5) for lab-time feedback, it does not match an answer-leak filter (phrases such as "length matters", "thicker … faster", "four times", "×4", "squared", "L²").
 
 == Fallback
-On any error, a timeout (5 s), or a failed check, the browser uses the rule-based rubric from `src/content.js` (`checkWritten`, `checkConclusion`, `checkReflection`: keyword sets for "same temperature" and "conducts heat away faster", and for the three variables), and labels the result *"Offline feedback (AI unavailable)"* with the reason in a tooltip and in the log. AI output carries an *"AI feedback"* label. During the exam the Gemini service was intermittently slow (many calls exceeded 4.5 s), and the labelled fallback handled every such case; `?ai=off` forces the fallback for demonstration.
+On any error, a timeout (10 s), or a failed check, the browser uses the rule-based rubric from `src/content.js` (`checkWritten`, `checkConclusion`, `checkReflection`: keyword sets for "same temperature" and "conducts heat away faster", and for the three variables), and labels the result *"Offline feedback (AI unavailable)"* with the reason in a tooltip and in the log. AI output carries an *"AI feedback"* label. During the exam the Gemini service was intermittently slow: with an initial 4.5 s budget many calls fell back, so we raised the budget to 9 s / 10 s, after which live calls returned AI feedback (about 9.5 s) while the labelled fallback still covers failures; `?ai=off` forces the fallback for demonstration.
 
 #figure(shot("d5a-lab.png", w: 78%), caption: [Lab (correct path): apparatus with thermal gradient, probe tag, ruler, readouts and live graph; control panel with "What am I testing?" and kept-constant tags; conclusion feedback labelled "Offline feedback (AI unavailable)".])
 
@@ -219,7 +219,7 @@ On any error, a timeout (5 s), or a failed check, the browser uses the rule-base
 ), caption: [Research frameworks and the features that implement them.])
 
 == Answer to the P5 design challenge
-*How does the system support learning from an unsuccessful experiment without revealing the answer?* The lab detects three kinds of unsuccessful experiment: (a) *confounded*: more than one variable changed since the previous trial; (b) *no result*: the far end never reaches 60 °C within 5 simulated minutes; (c) *contradiction*: a variable the learner said does not matter changes the result in a fair pair (difference > 15%). Rather than blocking, the system runs the trial and turns the failure into a question (Figure 7). Support is graded: hint 1 is a probing question; hint 2 says which variable to hold constant; hint 3 highlights the two table rows to compare. *Run a fair test* repairs the design but leaves the interpretation to the learner. After two hints (or three minutes) a worked comparison is offered using a *different* variable (source temperature), so the method is modelled without giving away the length or area result. The AI feedback on the lab conclusion is filtered for answer leaks. Finally, in the Conclusion phase the learner sees her own prediction next to her own evidence and must click "What do we notice?" before any resolution appears.
+*How does the system support learning from an unsuccessful experiment without revealing the answer?* The lab detects three kinds of unsuccessful experiment: (a) *confounded*: more than one variable changed since the previous trial; (b) *no result*: the far end never reaches 60 °C within 5 simulated minutes; (c) *contradiction*: a variable the learner said does not matter changes the result in a fair pair (difference > 15%). Rather than blocking, the system runs the trial and turns the failure into a question (Figure 6). Support is graded: hint 1 is a probing question; hint 2 says which variable to hold constant; hint 3 highlights the two table rows to compare. *Run a fair test* repairs the design but leaves the interpretation to the learner. After two hints (or three minutes) a worked comparison is offered using a *different* variable (source temperature), so the method is modelled without giving away the length or area result. The AI feedback on the lab conclusion is filtered for answer leaks. Finally, in the Conclusion phase the learner sees her own prediction next to her own evidence and must click "What do we notice?" before any resolution appears.
 
 #figure(shot("07-lab-confounded-1280.png", w: 72%), caption: [Unsuccessful (confounded) experiment: the run is allowed, then the note asks "Two things changed. Can we tell which one caused the difference?", with a graded hint, the "Why am I seeing this?" explanation and *Run a fair test*.])
 
@@ -254,9 +254,12 @@ We would run a pre/post design: the hook question and confidence rating serve as
 
 Additional indicators: time per phase (`step_time`, total ≤600 s for C4), confidence before vs after (`session_complete`), number of hypothesis revisions, and the fair-pair ratio. *If a criterion fails:* if O2 fails we would make the lock tags blocking for the Explorer track; if O1 fails we would add a scaling worked example before Q3; if O3 fails we would add a thermometer-reading mini-experiment on the two spoons to the Orientation phase.
 
+#pagebreak(weak: true)
 = AI-use log and reflection
 
-*AI chat log.* All AI assistance came from one Claude Code session (Anthropic, Claude Opus). It covered pre-exam environment setup, planning and card interpretation, prompt writing, research on the frameworks, implementation, deployment, the UI critique and this report. The complete session is submitted as a separate file, `ET617_23B2244_AI_chat_log.txt`. It holds every user message, every assistant reply and every tool call, in chronological order (tool outputs omitted).
+*AI chats, in the order used* (the complete logs are also submitted separately):
++ *Claude chat* (claude.ai): planning, card choice, prompt writing and research: #link("https://claude.ai/share/6f665113-c13e-4dd1-a066-4b9437441906")[claude.ai/share/6f665113-c13e-4dd1-a066-4b9437441906]
++ *Claude Code session* (Anthropic, Claude Opus): pre-exam environment setup, implementation, deployment, UI critique and this report. The full session (every user message, assistant reply and tool call, in chronological order) is pasted in the submitted log file `ET617_23B2244_AI_chat_log.txt`.
 
 *What we delegated.* Scaffolding, component code, the simulation, the serverless function, deployment commands, screenshot automation and the first drafts of documentation were produced with an AI coding assistant from our written specifications.
 
